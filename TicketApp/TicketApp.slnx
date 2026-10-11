@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="TicketApp.API/TicketApp.API.csproj" />
+  <Project Path="TicketApp.Application/TicketApp.Application.csproj" />
+  <Project Path="TicketApp.Core/TicketApp.Domain.csproj" />
+  <Project Path="TicketApp.Infrastructure/TicketApp.Infrastructure.csproj" />
+</Solution>
