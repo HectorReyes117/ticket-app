@@ -1,13 +1,12 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { MapPin } from "lucide-react";
+import { MapPin, MoreHorizontal } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal } from "lucide-react";
 import { UserAvatar } from "@/components/common/UserAvatar";
 import { PriorityBadge } from "@/components/common/PriorityBadge";
 import { SlaTimer } from "@/components/common/SlaTimer";
@@ -20,6 +19,7 @@ interface TicketKanbanCardProps {
   assignee?: User;
   site?: Site;
   onMove: (status: TicketStatus) => void;
+  isDragging?: boolean;
 }
 
 export function TicketKanbanCard({
@@ -28,42 +28,77 @@ export function TicketKanbanCard({
   assignee,
   site,
   onMove,
+  isDragging,
 }: TicketKanbanCardProps) {
   const navigate = useNavigate();
 
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+    e.dataTransfer.setData("text/plain", ticket.id);
+    e.dataTransfer.setData("application/json", JSON.stringify({ id: ticket.id, currentStatus: ticket.status }));
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Only navigate if clicking card body directly, not dropdown or buttons
+    const target = e.target as HTMLElement;
+    if (target.closest("[data-no-navigate]")) {
+      return;
+    }
+    navigate(`/tickets/${ticket.id}`);
+  };
+
   return (
-    <button
-      type="button"
-      onClick={() => navigate(`/tickets/${ticket.id}`)}
-      className="group w-full rounded-xl border border-border bg-card p-3.5 text-left shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all hover:border-brand/40 hover:shadow-sm"
+    <div
+      role="button"
+      tabIndex={0}
+      draggable
+      onDragStart={handleDragStart}
+      onClick={handleCardClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          navigate(`/tickets/${ticket.id}`);
+        }
+      }}
+      className={cn(
+        "group w-full rounded-xl border border-border bg-card p-3.5 text-left shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all hover:border-brand/40 hover:shadow-sm cursor-grab active:cursor-grabbing select-none",
+        isDragging && "opacity-40 border-dashed border-brand"
+      )}
     >
       <div className="flex items-start justify-between gap-2">
         <span className="font-mono text-xs font-semibold tabular-nums text-brand-soft-fg">
           {formatTicketId(ticket.sequence)}
         </span>
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            onClick={(event) => event.stopPropagation()}
-            className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
-            aria-label="Mover solicitud"
-          >
-            <MoreHorizontal className="size-4" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-44">
-            {TICKET_STATUSES.map((status) => (
-              <DropdownMenuItem
-                key={status}
-                disabled={status === ticket.status}
-                onClick={() => onMove(status)}
-              >
-                <span
-                  className={cn("size-1.5 rounded-full", STATUS_META[status].dot)}
-                />
-                {STATUS_META[status].label}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div data-no-navigate className="relative">
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              onClick={(event) => {
+                event.stopPropagation();
+              }}
+              className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground cursor-pointer"
+              aria-label="Mover solicitud"
+            >
+              <MoreHorizontal className="size-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44">
+              {TICKET_STATUSES.map((status) => (
+                <DropdownMenuItem
+                  key={status}
+                  disabled={status === ticket.status}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMove(status);
+                  }}
+                >
+                  <span
+                    className={cn("size-1.5 rounded-full", STATUS_META[status].dot)}
+                  />
+                  {STATUS_META[status].label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       <p className="mt-1 line-clamp-2 text-sm font-medium text-foreground">
@@ -91,7 +126,7 @@ export function TicketKanbanCard({
           {site?.name ?? "—"}
         </span>
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -108,19 +143,60 @@ export function TicketKanban({
   sitesById,
   onMove,
 }: TicketKanbanProps) {
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const [dragOverColumn, setDragOverColumn] = useState<TicketStatus | null>(null);
+
   const usersById = useMemo(
     () => Object.fromEntries(usersList.map((u) => [u.id, u])),
     [usersList],
   );
 
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, status: TicketStatus) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (dragOverColumn !== status) {
+      setDragOverColumn(status);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>, status: TicketStatus) => {
+    // Only clear if leaving the column element itself
+    if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+    if (dragOverColumn === status) {
+      setDragOverColumn(null);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetStatus: TicketStatus) => {
+    e.preventDefault();
+    setDragOverColumn(null);
+    setActiveDragId(null);
+
+    const ticketId = e.dataTransfer.getData("text/plain");
+    if (!ticketId) return;
+
+    const ticket = tickets.find((t) => t.id === ticketId);
+    if (ticket && ticket.status !== targetStatus) {
+      onMove(ticketId, targetStatus);
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
       {TICKET_STATUSES.map((status) => {
         const columnTickets = tickets.filter((t) => t.status === status);
+        const isColumnTarget = dragOverColumn === status;
+
         return (
           <div
             key={status}
-            className="flex flex-col gap-2.5 rounded-xl border border-border bg-muted/60 p-3"
+            onDragOver={(e) => handleDragOver(e, status)}
+            onDragLeave={(e) => handleDragLeave(e, status)}
+            onDrop={(e) => handleDrop(e, status)}
+            className={cn(
+              "flex flex-col gap-2.5 rounded-xl border border-border bg-muted/60 p-3 min-h-[350px] transition-colors",
+              isColumnTarget && "bg-brand-soft/50 border-brand/60 ring-2 ring-brand/20"
+            )}
           >
             <div className="flex items-center gap-2 px-1 pb-1">
               <span
@@ -133,21 +209,30 @@ export function TicketKanban({
                 {columnTickets.length}
               </span>
             </div>
+
             {columnTickets.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-border px-3 py-8 text-center text-xs text-muted-foreground">
-                Sin solicitudes
+              <div
+                className={cn(
+                  "flex-1 flex items-center justify-center rounded-lg border border-dashed border-border px-3 py-8 text-center text-xs text-muted-foreground transition-colors",
+                  isColumnTarget && "border-brand text-brand font-medium bg-card/60"
+                )}
+              >
+                {isColumnTarget ? "Soltar aquí para mover" : "Sin solicitudes"}
               </div>
             ) : (
-              columnTickets.map((ticket) => (
-                <TicketKanbanCard
-                  key={ticket.id}
-                  ticket={ticket}
-                  requestor={usersById[ticket.requestorId]}
-                  assignee={ticket.assigneeId ? usersById[ticket.assigneeId] : undefined}
-                  site={sitesById[ticket.siteId]}
-                  onMove={(status) => onMove(ticket.id, status)}
-                />
-              ))
+              <div className="flex flex-col gap-2.5 flex-1">
+                {columnTickets.map((ticket) => (
+                  <TicketKanbanCard
+                    key={ticket.id}
+                    ticket={ticket}
+                    isDragging={activeDragId === ticket.id}
+                    requestor={usersById[ticket.requestorId]}
+                    assignee={ticket.assigneeId ? usersById[ticket.assigneeId] : undefined}
+                    site={sitesById[ticket.siteId]}
+                    onMove={(newStatus) => onMove(ticket.id, newStatus)}
+                  />
+                ))}
+              </div>
             )}
           </div>
         );
