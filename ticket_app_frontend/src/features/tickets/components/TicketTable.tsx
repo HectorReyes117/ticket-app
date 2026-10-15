@@ -20,6 +20,11 @@ interface TicketTableProps {
   tickets: Ticket[];
   usersList: User[];
   sitesById: Record<string, Site | undefined>;
+  /**
+   * Drop the table's own bordered container so it can sit flush inside a parent card.
+   * The caller then owns the surface, the rounding and the border.
+   */
+  plain?: boolean;
 }
 
 function AssigneeCell({
@@ -52,6 +57,7 @@ export function TicketTable({
   tickets,
   usersList,
   sitesById,
+  plain = false,
 }: TicketTableProps) {
   const navigate = useNavigate();
   const usersById = useMemo(
@@ -59,9 +65,8 @@ export function TicketTable({
     [usersList],
   );
 
-  return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card">
-      <Table>
+  const table = (
+    <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             <TableHead className="w-[190px]">Solicitud</TableHead>
@@ -141,6 +146,13 @@ export function TicketTable({
           })}
         </TableBody>
       </Table>
+  );
+
+  if (plain) return table;
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-border bg-card">
+      {table}
     </div>
   );
 }

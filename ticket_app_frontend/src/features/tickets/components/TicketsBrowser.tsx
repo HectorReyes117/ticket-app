@@ -1,15 +1,18 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FilePlus2, Inbox } from "lucide-react";
+import { FilePlus2, Inbox, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/common/EmptyState";
 import { TicketTable } from "./TicketTable";
 import { TicketKanban } from "./TicketKanban";
 import { TicketsToolbar } from "./TicketsToolbar";
+import { TicketsTableFooter } from "./TicketsTableFooter";
 import { useSiteStore, useTicketStore, useUserStore } from "@/store";
 import { useAuth } from "@/context/auth-context";
+import { cn } from "@/utils";
 import {
+  DEFAULT_PAGE_SIZE,
   DEFAULT_TICKET_QUERY,
   applyTicketQuery,
   buildPillOptions,
@@ -40,6 +43,20 @@ export function TicketsBrowser({
 
   const [filters, setFilters] = useState<TicketQueryState>(DEFAULT_TICKET_QUERY);
   const [view, setView] = useState<TicketView>("table");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const refreshTimer = useRef<number | null>(null);
+
+  useEffect(
+    () => () => {
+      if (refreshTimer.current !== null) {
+        window.clearTimeout(refreshTimer.current);
+      }
+    },
+    [],
+  );
 
   const usersById = useMemo(
     () => Object.fromEntries(users.map((u) => [u.id, u])),
@@ -80,11 +97,46 @@ export function TicketsBrowser({
 
   const filtersActive = hasActiveFilters(filters);
 
-  const handleChange = (patch: Partial<TicketQueryState>) =>
-    setFilters((current) => ({ ...current, ...patch }));
+  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const currentPage = Math.min(page, pageCount);
+  const start = (currentPage - 1) * pageSize;
+  const pageTickets =
+    view === "table" ? filtered.slice(start, start + pageSize) : filtered;
+  const from = filtered.length === 0 ? 0 : start + 1;
+  const to = Math.min(start + pageSize, filtered.length);
 
-  const handleClear = () =>
+  const handleChange = (patch: Partial<TicketQueryState>) => {
+    setFilters((current) => ({ ...current, ...patch }));
+    setPage(1);
+  };
+
+  const handleClear = () => {
     setFilters((current) => ({ ...DEFAULT_TICKET_QUERY, sort: current.sort }));
+    setPage(1);
+  };
+
+  const handlePageSizeChange = (nextPageSize: number) => {
+    setPageSize(nextPageSize);
+    setPage(1);
+  };
+
+  /**
+   * There is no tickets backend yet, so refreshing re-reads the (already reactive) local
+   * store and returns to the first page. It must never call `seedTickets()`: that would
+   * discard tickets created or edited during the session. Swap for a real refetch when the
+   * API lands.
+   */
+  const handleRefresh = () => {
+    setPage(1);
+    setRefreshing(true);
+    if (refreshTimer.current !== null) {
+      window.clearTimeout(refreshTimer.current);
+    }
+    refreshTimer.current = window.setTimeout(() => {
+      refreshTimer.current = null;
+      setRefreshing(false);
+    }, 500);
+  };
 
   const handleMove = (ticketId: string, nextStatus: TicketStatus) => {
     updateStatus(ticketId, nextStatus, user?.id ?? "system");
@@ -129,15 +181,64 @@ export function TicketsBrowser({
             />
           </CardContent>
         </Card>
-      ) : view === "table" ? (
-        <TicketTable tickets={filtered} usersList={users} sitesById={sitesById} />
-      ) : (
+      ) : view === "kanban" ? (
         <TicketKanban
-          tickets={filtered}
+          tickets={pageTickets}
           usersList={users}
           sitesById={sitesById}
           onMove={handleMove}
         />
+      ) : (
+        <div className="overflow-hidden rounded-xl bg-card text-sm ring-1 ring-foreground/10">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
+            <h2 className="text-base font-semibold text-foreground">
+              Registro de Tickets
+            </h2>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-muted-foreground">
+                Mostrando{" "}
+                <span className="font-medium tabular-nums text-foreground">
+                  {pageTickets.length}
+                </span>{" "}
+                de{" "}
+                <span className="font-medium tabular-nums text-foreground">
+                  {filtered.length}
+                </span>
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon-sm"
+                onClick={handleRefresh}
+                disabled={refreshing}
+                aria-label="Refrescar solicitudes"
+                title="Refrescar solicitudes"
+              >
+                <RefreshCw
+                  className={cn("size-4", refreshing && "animate-spin")}
+                />
+              </Button>
+            </div>
+          </div>
+
+          <TicketTable
+            plain
+            tickets={pageTickets}
+            usersList={users}
+            sitesById={sitesById}
+          />
+
+          <TicketsTableFooter
+            from={from}
+            to={to}
+            total={filtered.length}
+            page={currentPage}
+            pageCount={pageCount}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={handlePageSizeChange}
+          />
+        </div>
       )}
     </div>
   );

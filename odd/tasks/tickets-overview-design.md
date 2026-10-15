@@ -121,7 +121,7 @@ The generic improvements (counters, rows-per-page, pagination, extra selects, so
 | ID | Task | Specs | Route | Status | Evidence |
 |----|------|-------|-------|--------|----------|
 | T1 | Enrich the filter toolbar: pills with counts + quick filters, Área/Técnico selects, Limpiar filtros, Ordenar por | S4, S5, S11, S12 | inline | done | `ticketQuery` probe 34/34 pass; `npm run build` ok; eslint clean on touched files |
-| T2 | Table chrome + pagination: card header `Registro de Tickets`/`Mostrando X de Y`, refresh, results row, rows-per-page, page controls | S6, S7, S8, S9, S12 | inline | pending | — |
+| T2 | Table chrome + pagination: card header `Registro de Tickets`/`Mostrando X de Y`, refresh, results row, rows-per-page, page controls | S6, S7, S8, S9, S12 | inline | done | `ticketQuery` probe 57/57 pass (incl. a paging mirror); `npm run build` ok; eslint clean on `src/features/tickets` |
 | T3 | Page chrome: KPI cards, date-range filter, `+ Nueva Solicitud` button | S1, S2, S3 | inline | pending | — |
 | T4 | Distribution chart card below the table | S10 | inline | pending | — |
 
@@ -173,3 +173,19 @@ array. Checks: `npm run build` ok, eslint clean on the touched files. The probe 
 (no test runner exists in this project), so it is not committed.
 Note: the empty-state `Crear solicitud` button, previously a no-op, now navigates to `/tickets/new`
 (S3, completed by T3).
+
+L6 — T2 delivered. `TicketsTableFooter.tsx` (results summary, `Filas por página` select, numbered
+pagination with ellipsis gaps + prev/next, all ours on top of the repo's `Pagination*` structure) and
+a `plain` prop on `TicketTable` so it can sit flush inside a parent surface instead of drawing its own
+bordered container. `TicketsBrowser` now slices the filtered set, wraps the table in a card with the
+design's `Registro de Tickets` header + `Mostrando X de Y` + a refresh control, and renders the footer.
+Filter / clear / page-size changes all reset to page 1; an out-of-range page clamps to the last page.
+**Deliberate deviation:** `DEFAULT_PAGE_SIZE` is `10`, not the design's `20`. The seeded data set holds
+only 14 tickets, so a 20-row page would always render a single page and make the new pagination
+invisible; the deviation is documented at the constant in `ticketQuery.ts` and is a one-line revert.
+Paging was verified against the real data with the same one-off Vite-SSR probe (57/57 checks): page 1
+= 10 rows `1–10`, page 2 = 4 rows `11–14`, the two pages do not overlap and their union is the full
+filtered set, page 99 clamps to page 2, the empty set reports `0 a 0` on one page, and narrowing the
+filter while on page 2 clamps back to page 1. Checks: `npm run build` ok, `eslint src/features/tickets`
+clean (fixing a real `react-refresh/only-export-components` error by moving the page-size constants
+into `ticketQuery.ts`).

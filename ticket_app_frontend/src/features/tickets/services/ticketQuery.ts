@@ -46,6 +46,15 @@ export const TICKET_SORT_OPTIONS: Array<{ value: TicketSortKey; label: string }>
   { value: "sla", label: "SLA por vencer" },
 ];
 
+export const PAGE_SIZE_OPTIONS = [10, 20, 50];
+
+/**
+ * The design shows `Filas por página: 20`, but the seeded data set only holds 14 tickets,
+ * so a 20-row page would always render a single page and hide the pagination controls.
+ * 10 keeps the feature observable with the current data.
+ */
+export const DEFAULT_PAGE_SIZE = 10;
+
 const QUICK_FILTERS: TicketQuickFilter[] = ["unassigned", "urgent", "closed"];
 
 export function isQuickFilter(value: string): value is TicketQuickFilter {
