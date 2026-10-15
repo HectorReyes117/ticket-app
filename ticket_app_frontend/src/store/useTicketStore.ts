@@ -13,7 +13,13 @@ interface TicketStore {
   items: Ticket[];
   loading: boolean;
   ready: boolean;
-  fetchTickets: () => Promise<void>;
+  fetchTickets: (params?: {
+    status?: string;
+    priority?: string;
+    locationId?: number;
+    assigneeId?: number;
+    search?: string;
+  }) => Promise<void>;
   createTicket: (draft: TicketDraft) => Promise<Ticket>;
   updateStatus: (
     id: string,
@@ -37,10 +43,10 @@ export const useTicketStore = create<TicketStore>((set, get) => ({
   loading: false,
   ready: false,
 
-  fetchTickets: async () => {
+  fetchTickets: async (params) => {
     set({ loading: true });
     try {
-      const tickets = await fetchTickets();
+      const tickets = await fetchTickets(params);
       set({ items: tickets, ready: true, loading: false });
     } catch (err) {
       console.error("Error fetching tickets:", err);

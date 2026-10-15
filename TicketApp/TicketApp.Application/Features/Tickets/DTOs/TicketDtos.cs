@@ -50,9 +50,12 @@ public class TicketSummaryDto
     public string PriorityDescription { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
     public string StatusDescription { get; set; } = string.Empty;
+    public int LocationId { get; set; }
     public string LocationName { get; set; } = string.Empty;
+    public int RequesterId { get; set; }
     public string RequesterName { get; set; } = string.Empty;
     public string? RequesterAvatarUrl { get; set; }
+    public int? AssigneeId { get; set; }
     public string? AssigneeName { get; set; }
     public string? AssigneeAvatarUrl { get; set; }
     public DateTime CreatedAt { get; set; }

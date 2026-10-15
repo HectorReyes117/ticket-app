@@ -62,12 +62,40 @@ export function TicketsBrowser({
     [],
   );
 
-  // A date-range change comes from the page header, not from the toolbar, so reset paging here.
-  const [lastRange, setLastRange] = useState(createdRange);
-  if (lastRange !== createdRange) {
-    setLastRange(createdRange);
-    setPage(1);
-  }
+  const fetchTickets = useTicketStore((state) => state.fetchTickets);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // Map filters to backend query
+      const params: any = {};
+      if (filters.search.trim()) params.search = filters.search.trim();
+
+      if (filters.pill !== "all") {
+        if (filters.pill === "unassigned" || filters.pill === "urgent" || filters.pill === "closed") {
+          // Handled as tab or specific filter
+          params.status = filters.pill;
+        } else {
+          params.status = filters.pill;
+        }
+      }
+
+      if (filters.priority !== "all") {
+        params.priority = filters.priority;
+      }
+
+      if (filters.siteId !== "all") {
+        params.locationId = parseInt(filters.siteId, 10);
+      }
+
+      if (filters.technicianId !== "all") {
+        params.assigneeId = parseInt(filters.technicianId, 10);
+      }
+
+      fetchTickets(params);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [filters, fetchTickets]);
 
   const usersById = useMemo(
     () => Object.fromEntries(users.map((u) => [u.id, u])),

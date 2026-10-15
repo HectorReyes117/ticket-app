@@ -46,9 +46,12 @@ export interface BackendTicketSummaryDto {
   priorityDescription: string;
   status: string;
   statusDescription: string;
+  locationId?: number;
   locationName: string;
+  requesterId?: number;
   requesterName: string;
   requesterAvatarUrl?: string;
+  assigneeId?: number;
   assigneeName?: string;
   assigneeAvatarUrl?: string;
   createdAt: string;
@@ -206,8 +209,9 @@ export async function fetchTickets(params?: {
     subcategory: "",
     priority: (item.priority.toLowerCase() as Priority) || "medium",
     status: normalizeStatus(item.status),
-    requestorId: "1",
-    siteId: "1",
+    requestorId: item.requesterId ? String(item.requesterId) : "1",
+    assigneeId: item.assigneeId ? String(item.assigneeId) : undefined,
+    siteId: item.locationId ? String(item.locationId) : "1",
     area: item.locationName,
     createdAt: item.createdAt,
     updatedAt: item.createdAt,
