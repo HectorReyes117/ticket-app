@@ -9,3 +9,8 @@ Thumbs.db
 *.tmp
 *.log
 .atl
+
+# Project notes & specifications in root
+/considerations.md
+/GRUPO 5*.md
+/*.md
