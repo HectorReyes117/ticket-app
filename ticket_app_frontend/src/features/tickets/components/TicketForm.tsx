@@ -180,7 +180,7 @@ export function TicketForm() {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) {
       toast.add({
@@ -191,23 +191,31 @@ export function TicketForm() {
       return;
     }
 
-    const ticket = createTicket({
-      title: form.title,
-      description: form.description,
-      category: currentCategory.label,
-      subcategory: currentCategory.defaultSubcategory,
-      priority: form.priority,
-      requestorId: form.requestorId || user?.id || "usr-1",
-      siteId: form.siteId || (sites[0]?.id ?? "site-central"),
-      area: form.area || "Datacenter Piso 1",
-    });
+    try {
+      const ticket = await createTicket({
+        title: form.title,
+        description: form.description,
+        category: currentCategory.label,
+        subcategory: currentCategory.defaultSubcategory,
+        priority: form.priority,
+        requestorId: form.requestorId || user?.id || "usr-1",
+        siteId: form.siteId || (sites[0]?.id ?? "1"),
+        area: form.area || "Datacenter Piso 1",
+      });
 
-    toast.add({
-      title: "Solicitud creada y enrutada",
-      description: `Se registró con éxito la solicitud #${ticket.id}.`,
-      type: "success",
-    });
-    navigate(`/tickets/${ticket.id}`);
+      toast.add({
+        title: "Solicitud creada y enrutada",
+        description: `Se registró con éxito la solicitud #${ticket.id}.`,
+        type: "success",
+      });
+      navigate(`/tickets/${ticket.id}`);
+    } catch (err: any) {
+      toast.add({
+        title: "Error al registrar la solicitud",
+        description: err.message || "No fue posible conectar con el servidor.",
+        type: "danger",
+      });
+    }
   };
 
   const addAttachmentSimulated = () => {

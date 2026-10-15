@@ -93,7 +93,7 @@ export function SiteFormSheet({ open, onOpenChange }: SiteFormSheetProps) {
     setShowAddAreaInput(false);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const nextErrors: Partial<Record<keyof FormState, string>> = {};
     if (!form.name.trim()) nextErrors.name = "El nombre oficial es obligatorio.";
@@ -103,20 +103,28 @@ export function SiteFormSheet({ open, onOpenChange }: SiteFormSheetProps) {
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
-    createSite({
-      name: form.name,
-      address: form.address,
-      city: form.city,
-      phone: form.phone,
-      areas: form.areas.length > 0 ? form.areas : ["Área General"],
-    });
+    try {
+      await createSite({
+        name: form.name,
+        address: form.address,
+        city: form.city,
+        phone: form.phone,
+        areas: form.areas.length > 0 ? form.areas : ["Área General"],
+      });
 
-    toast.add({
-      title: "Sede registrada exitosamente",
-      description: `${form.name} ha sido agregada al inventario corporativo.`,
-      type: "success",
-    });
-    onOpenChange(false);
+      toast.add({
+        title: "Sede registrada exitosamente",
+        description: `${form.name} ha sido agregada al inventario corporativo.`,
+        type: "success",
+      });
+      onOpenChange(false);
+    } catch (err: any) {
+      toast.add({
+        title: "Error al registrar sede",
+        description: err.message || "No se pudo comunicar con el servidor.",
+        type: "danger",
+      });
+    }
   };
 
   return (

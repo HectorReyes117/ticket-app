@@ -1,22 +1,36 @@
 import { create } from "zustand";
-import { mockSites } from "@/features/sites/data/mockSites";
-import { createSiteFromDraft } from "@/features/sites/services/siteService";
+import {
+  listSites,
+  createSite as apiCreateSite,
+} from "@/features/sites/services/siteService";
 import type { Site, SiteDraft } from "@/types";
 
 interface SiteStore {
   items: Site[];
+  loading: boolean;
   ready: boolean;
-  seedSites: () => void;
-  createSite: (draft: SiteDraft) => Site;
+  fetchSites: () => Promise<void>;
+  createSite: (draft: SiteDraft) => Promise<Site>;
 }
 
 export const useSiteStore = create<SiteStore>((set) => ({
-  items: mockSites,
-  ready: true,
-  seedSites: () => set({ items: mockSites, ready: true }),
+  items: [],
+  loading: false,
+  ready: false,
 
-  createSite: (draft) => {
-    const site = createSiteFromDraft(draft);
+  fetchSites: async () => {
+    set({ loading: true });
+    try {
+      const sites = await listSites();
+      set({ items: sites, ready: true, loading: false });
+    } catch (err) {
+      console.error("Error fetching locations/sites:", err);
+      set({ loading: false });
+    }
+  },
+
+  createSite: async (draft) => {
+    const site = await apiCreateSite(draft);
     set((state) => ({ items: [...state.items, site] }));
     return site;
   },

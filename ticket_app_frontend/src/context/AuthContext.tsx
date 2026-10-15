@@ -25,6 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     setUser(null);
     localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem("ticketapp.token");
   }, []);
 
   const value = useMemo(

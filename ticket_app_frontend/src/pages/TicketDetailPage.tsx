@@ -79,10 +79,22 @@ export function TicketDetailPage() {
   const [notifyEmail, setNotifyEmail] = useState(true);
   const [showAssignModal, setShowAssignModal] = useState(false);
 
+  const fetchTicketDetails = useTicketStore((state) => state.fetchTicketDetails);
+
   useEffect(() => {
-    if (!ticket) navigate("/tickets", { replace: true });
-    else setSelectedStatusForm(ticket.status);
-  }, [ticket, navigate]);
+    if (id) {
+      fetchTicketDetails(id).catch(() => {
+        // Ticket not found
+        navigate("/tickets", { replace: true });
+      });
+    }
+  }, [id, fetchTicketDetails, navigate]);
+
+  useEffect(() => {
+    if (ticket) {
+      setSelectedStatusForm(ticket.status);
+    }
+  }, [ticket]);
 
   if (!ticket) {
     return null;

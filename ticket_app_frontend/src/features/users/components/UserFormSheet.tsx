@@ -73,6 +73,7 @@ const DEPARTMENTS = [
 export function UserFormSheet({ open, onOpenChange, userToEdit }: UserFormSheetProps) {
   const sites = useSiteStore((state) => state.items);
   const createUser = useUserStore((state) => state.createUser);
+  const updateUser = useUserStore((state) => state.updateUser);
 
   const [form, setForm] = useState<FormState>(emptyForm);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
@@ -140,7 +141,7 @@ export function UserFormSheet({ open, onOpenChange, userToEdit }: UserFormSheetP
         .toUpperCase()
     : "NP";
 
-  const submit = () => {
+  const submit = async () => {
     const nextErrors: Partial<Record<keyof FormState, string>> = {};
     if (!form.name.trim()) nextErrors.name = "El nombre completo es obligatorio.";
     const emailError = validateEmail(form.email);
@@ -152,25 +153,50 @@ export function UserFormSheet({ open, onOpenChange, userToEdit }: UserFormSheetP
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
-    const user = createUser({
-      name: form.name,
-      email: form.email,
-      phone: form.phone,
-      role: form.role,
-      siteId: form.siteId,
-      department: form.department,
-      title: form.title || (form.role === "technician" ? "Técnico Especialista" : "Funcionario"),
-      extension: form.extension || "Ext. 4010",
-      employeeCode: form.employeeCode,
-      queues: form.queues,
-    });
-
-    toast.add({
-      title: userToEdit ? "Usuario actualizado" : "Usuario creado y enrolado",
-      description: `${user.name} ha sido configurado en el directorio ITSM con rol ${form.role}.`,
-      type: "success",
-    });
-    onOpenChange(false);
+    try {
+      if (userToEdit) {
+        await updateUser(userToEdit.id, {
+          name: form.name,
+          email: form.email,
+          phone: form.phone,
+          role: form.role,
+          siteId: form.siteId,
+          department: form.department,
+          title: form.title,
+          extension: form.extension,
+        });
+        toast.add({
+          title: "Usuario actualizado",
+          description: `Los datos de ${form.name} se han guardado con éxito.`,
+          type: "success",
+        });
+      } else {
+        const user = await createUser({
+          name: form.name,
+          email: form.email,
+          phone: form.phone,
+          role: form.role,
+          siteId: form.siteId,
+          department: form.department,
+          title: form.title || (form.role === "technician" ? "Técnico Especialista" : "Funcionario"),
+          extension: form.extension || "Ext. 4010",
+          employeeCode: form.employeeCode,
+          queues: form.queues,
+        });
+        toast.add({
+          title: "Usuario creado y enrolado",
+          description: `${user.name} ha sido configurado en el directorio ITSM con rol ${form.role}.`,
+          type: "success",
+        });
+      }
+      onOpenChange(false);
+    } catch (err: any) {
+      toast.add({
+        title: "Error al guardar usuario",
+        description: err.message || "Ocurrió un problema de comunicación con el servidor.",
+        type: "danger",
+      });
+    }
   };
 
   return (

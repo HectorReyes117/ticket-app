@@ -1,40 +1,137 @@
-import { mockApi } from "@/services/api";
-import { mockUsers } from "../data/mockUsers";
-import type { User, UserDraft } from "@/types";
+import { api } from "@/services/api";
+import type { User, UserDraft, Role, Presence } from "@/types";
 
-const randomId = () =>
-  `user-${Math.random().toString(36).slice(2, 10)}`;
+export interface BackendUserDto {
+  id: number;
+  employeeCode: string;
+  name: string;
+  email: string;
+  role: string;
+  roleDescription: string;
+  position: string;
+  phone: string;
+  extension?: string;
+  avatarUrl?: string;
+  presence: string;
+  locationId?: number;
+  locationName?: string;
+  departmentId?: number;
+  departmentName?: string;
+  openTicketsCount: number;
+  isActive: boolean;
+  createdAt: string;
+}
 
-export function createUserFromDraft(draft: UserDraft): User {
+export function mapBackendDtoToUser(dto: BackendUserDto): User {
+  const roleLower = (dto.role || "requestor").toLowerCase();
+  const validRole: Role =
+    roleLower === "admin"
+      ? "admin"
+      : roleLower === "technician"
+      ? "technician"
+      : roleLower === "director"
+      ? "director"
+      : "requestor";
+
+  const presenceLower = (dto.presence || "online").toLowerCase();
+  const validPresence: Presence =
+    presenceLower === "busy"
+      ? "busy"
+      : presenceLower === "offline"
+      ? "offline"
+      : "online";
+
   return {
-    id: randomId(),
-    name: draft.name.trim(),
-    email: draft.email.trim().toLowerCase(),
-    phone: draft.phone.trim(),
-    role: draft.role,
-    siteId: draft.siteId,
-    active: true,
-    presence: "offline",
+    id: String(dto.id),
+    name: dto.name,
+    email: dto.email,
+    phone: dto.phone || "",
+    role: validRole,
+    siteId: dto.locationId ? String(dto.locationId) : "1",
+    active: dto.isActive,
+    presence: validPresence,
     color: "#2563eb",
-    openTickets: 0,
-    lastActiveAt: new Date().toISOString(),
-    department: draft.department?.trim() || "TI & Infraestructura",
-    title: draft.title?.trim() || "Especialista de Soporte",
-    extension: draft.extension?.trim() || "Ext. 4010",
-    employeeCode: draft.employeeCode?.trim() || `#EMP-${Math.floor(1000 + Math.random() * 9000)}`,
-    queues: draft.queues || ["Soporte General"],
+    openTickets: dto.openTicketsCount || 0,
+    lastActiveAt: dto.createdAt || new Date().toISOString(),
+    department: dto.departmentName || "TI & Infraestructura",
+    title: dto.position || "Especialista de Soporte",
+    extension: dto.extension ? `Ext. ${dto.extension}` : "",
+    employeeCode: dto.employeeCode || `#EMP-${dto.id}`,
+    queues: ["Soporte General"],
   };
 }
 
-export function findByEmail(
-  email: string,
-  users: User[] = mockUsers,
-): User | undefined {
-  return users.find(
-    (u) => u.email.toLowerCase() === email.trim().toLowerCase(),
-  );
+export async function listUsers(params?: {
+  role?: string;
+  locationId?: number;
+  activeOnly?: boolean;
+}): Promise<User[]> {
+  const data = await api.get<BackendUserDto[]>("/users", params);
+  return (data || []).map(mapBackendDtoToUser);
 }
 
-export function listMockUsers(): Promise<User[]> {
-  return mockApi(mockUsers);
+export async function getUserById(id: string | number): Promise<User> {
+  const data = await api.get<BackendUserDto>(`/users/${id}`);
+  return mapBackendDtoToUser(data);
+}
+
+export async function createUser(draft: UserDraft): Promise<User> {
+  // Map role to backend enum number (Requestor=1, Technician=2, Admin=3, Director=4)
+  const roleMap: Record<Role, number> = {
+    requestor: 1,
+    technician: 2,
+    admin: 3,
+    director: 4,
+  };
+
+  const payload = {
+    name: draft.name,
+    email: draft.email,
+    password: "Password123!", // Default initial temporary password
+    role: roleMap[draft.role] ?? 1,
+    position: draft.title || "Colaborador",
+    phone: draft.phone,
+    extension: draft.extension,
+    locationId: draft.siteId ? parseInt(draft.siteId, 10) : 1,
+    departmentId: 1, // Default general department
+  };
+
+  const created = await api.post<BackendUserDto>("/users", payload);
+  return mapBackendDtoToUser(created);
+}
+
+export async function updateUser(id: string | number, draft: Partial<UserDraft & { active?: boolean }>): Promise<User> {
+  const roleMap: Record<Role, number> = {
+    requestor: 1,
+    technician: 2,
+    admin: 3,
+    director: 4,
+  };
+
+  const payload: any = {
+    name: draft.name,
+    email: draft.email,
+    position: draft.title,
+    phone: draft.phone,
+    extension: draft.extension,
+    locationId: draft.siteId ? parseInt(draft.siteId, 10) : undefined,
+    isActive: draft.active,
+  };
+
+  if (draft.role) {
+    payload.role = roleMap[draft.role];
+  }
+
+  const updated = await api.put<BackendUserDto>(`/users/${id}`, payload);
+  return mapBackendDtoToUser(updated);
+}
+
+export async function toggleUserActive(id: string | number, isActive?: boolean): Promise<boolean> {
+  const res = await api.patch<boolean>(`/users/${id}/status`, { isActive });
+  return res;
+}
+
+export async function getTechnicians(): Promise<User[]> {
+  const data = await api.get<BackendUserDto[]>("/users/technicians");
+  return (data || []).map(mapBackendDtoToUser);
 }
