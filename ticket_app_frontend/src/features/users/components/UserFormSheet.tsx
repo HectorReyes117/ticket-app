@@ -153,6 +153,10 @@ export function UserFormSheet({ open, onOpenChange }: UserFormSheetProps) {
               <Select
                 value={form.role}
                 onValueChange={(value) => setField("role", (value ?? "requestor") as Role)}
+                items={ROLES.map((role) => ({
+                  value: role,
+                  label: ROLE_META[role].label,
+                }))}
               >
                 <SelectTrigger id="user-role" className="w-full">
                   <SelectValue />
@@ -172,6 +176,7 @@ export function UserFormSheet({ open, onOpenChange }: UserFormSheetProps) {
               <Select
                 value={form.siteId}
                 onValueChange={(value) => setField("siteId", value ?? "")}
+                items={sites.map((site) => ({ value: site.id, label: site.name }))}
               >
                 <SelectTrigger id="user-site" className="w-full">
                   <SelectValue placeholder="Selecciona" />

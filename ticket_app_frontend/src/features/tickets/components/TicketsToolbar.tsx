@@ -68,6 +68,10 @@ export function TicketsToolbar({
             <Select
               value={filters.area}
               onValueChange={(value) => onChange({ area: value ?? "all" })}
+              items={[
+                { value: "all", label: "Todas las áreas" },
+                ...areaOptions.map((area) => ({ value: area, label: area })),
+              ]}
             >
               <SelectTrigger className="w-44" aria-label="Filtrar por área">
                 <SelectValue placeholder="Área" />
@@ -87,6 +91,13 @@ export function TicketsToolbar({
               onValueChange={(value) =>
                 onChange({ priority: (value ?? "all") as TicketQueryState["priority"] })
               }
+              items={[
+                { value: "all", label: "Todas las prioridades" },
+                ...PRIORITIES.map((priority) => ({
+                  value: priority,
+                  label: PRIORITY_META[priority].label,
+                })),
+              ]}
             >
               <SelectTrigger className="w-40" aria-label="Filtrar por prioridad">
                 <SelectValue placeholder="Prioridad" />
@@ -104,6 +115,13 @@ export function TicketsToolbar({
             <Select
               value={filters.technicianId}
               onValueChange={(value) => onChange({ technicianId: value ?? "all" })}
+              items={[
+                { value: "all", label: "Cualquier técnico" },
+                ...technicians.map((technician) => ({
+                  value: technician.id,
+                  label: technician.name,
+                })),
+              ]}
             >
               <SelectTrigger className="w-40" aria-label="Filtrar por técnico">
                 <SelectValue placeholder="Técnico" />
@@ -121,6 +139,10 @@ export function TicketsToolbar({
             <Select
               value={filters.siteId}
               onValueChange={(value) => onChange({ siteId: value ?? "all" })}
+              items={[
+                { value: "all", label: "Todas las sedes" },
+                ...sites.map((site) => ({ value: site.id, label: site.name })),
+              ]}
             >
               <SelectTrigger className="w-44" aria-label="Filtrar por sede">
                 <SelectValue placeholder="Sede" />
@@ -140,6 +162,10 @@ export function TicketsToolbar({
               onValueChange={(value) =>
                 onChange({ sort: (value ?? "recent") as TicketSortKey })
               }
+              items={TICKET_SORT_OPTIONS.map((option) => ({
+                value: option.value,
+                label: option.label,
+              }))}
             >
               <SelectTrigger className="w-44" aria-label="Ordenar por">
                 <SelectValue placeholder="Ordenar por" />

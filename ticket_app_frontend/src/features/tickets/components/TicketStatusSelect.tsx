@@ -28,6 +28,10 @@ export function TicketStatusSelect({
       value={value}
       onValueChange={(next) => onValueChange(next as TicketStatus)}
       disabled={disabled}
+      items={TICKET_STATUSES.map((status) => ({
+        value: status,
+        label: STATUS_META[status].label,
+      }))}
     >
       <SelectTrigger
         size={size}

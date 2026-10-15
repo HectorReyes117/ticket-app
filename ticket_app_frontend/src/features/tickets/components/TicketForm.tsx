@@ -177,6 +177,7 @@ export function TicketForm() {
                   <Select
                     value={form.requestorId}
                     onValueChange={(value) => setField("requestorId", value ?? "")}
+                    items={attendees.map((u) => ({ value: u.id, label: u.name }))}
                   >
                     <SelectTrigger id="requestorId" className="w-full">
                       <SelectValue placeholder="Selecciona el solicitante" />
@@ -202,6 +203,12 @@ export function TicketForm() {
                       setField("siteId", value ?? "");
                       setField("area", "");
                     }}
+                    items={sites
+                      .filter((s) => s.active)
+                      .map((site) => ({
+                        value: site.id,
+                        label: `${site.name} · ${site.city}`,
+                      }))}
                   >
                     <SelectTrigger id="siteId" className="w-full">
                       <SelectValue placeholder="Selecciona la sede" />
@@ -227,6 +234,10 @@ export function TicketForm() {
                     value={form.area}
                     onValueChange={(value) => setField("area", value ?? "")}
                     disabled={!selectedSite}
+                    items={(selectedSite?.areas ?? []).map((area) => ({
+                      value: area,
+                      label: area,
+                    }))}
                   >
                     <SelectTrigger id="area" className="w-full">
                       <SelectValue
@@ -262,6 +273,10 @@ export function TicketForm() {
                       setField("category", value ?? "");
                       setField("subcategory", "");
                     }}
+                    items={SERVICE_CATEGORIES.map((category) => ({
+                      value: category.label,
+                      label: category.label,
+                    }))}
                   >
                     <SelectTrigger id="category" className="w-full">
                       <SelectValue placeholder="Selecciona la categoría" />
@@ -285,6 +300,10 @@ export function TicketForm() {
                     value={form.subcategory}
                     onValueChange={(value) => setField("subcategory", value ?? "")}
                     disabled={!selectedCategory}
+                    items={(selectedCategory?.options ?? []).map((option) => ({
+                      value: option,
+                      label: option,
+                    }))}
                   >
                     <SelectTrigger id="subcategory" className="w-full">
                       <SelectValue placeholder="Selecciona el tipo" />

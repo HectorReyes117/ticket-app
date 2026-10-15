@@ -48,6 +48,10 @@ export function TicketsDistributionChart({
           onValueChange={(value) =>
             setPeriod((value ?? "month") as DistributionPeriod)
           }
+          items={DISTRIBUTION_PERIODS.map((option) => ({
+            value: option,
+            label: DISTRIBUTION_PERIOD_LABELS[option],
+          }))}
         >
           <SelectTrigger className="w-40" aria-label="Periodo de la distribución">
             <SelectValue placeholder="Periodo" />
