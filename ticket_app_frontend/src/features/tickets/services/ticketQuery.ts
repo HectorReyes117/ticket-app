@@ -39,6 +39,19 @@ export const URGENT_PRIORITIES: Priority[] = ["high", "critical"];
 /** `Cerradas` in the design: the two terminal statuses. */
 export const CLOSED_STATUSES: TicketStatus[] = ["resolved", "cancelled"];
 
+/** Statuses that still need work, i.e. what "Tickets abiertos" counts. */
+export const OPEN_STATUSES: TicketStatus[] = ["pending", "in_progress", "on_hold"];
+
+/**
+ * Inclusive created-at window. Owned by the page (header date-range filter) rather than by
+ * the toolbar, so it travels through `TicketQueryContext` and still shapes the faceted pill counts.
+ * The optional `| undefined` unions keep it assignable from react-day-picker's `DateRange`.
+ */
+export interface TicketDateRange {
+  from?: Date | undefined;
+  to?: Date | undefined;
+}
+
 export const TICKET_SORT_OPTIONS: Array<{ value: TicketSortKey; label: string }> = [
   { value: "recent", label: "Más recientes" },
   { value: "oldest", label: "Más antiguas" },
@@ -71,15 +84,38 @@ export function matchesPill(ticket: Ticket, pill: TicketPillFilter): boolean {
 
 export interface TicketQueryContext {
   usersById: Record<string, User | undefined>;
+  createdRange?: TicketDateRange;
+}
+
+/** Day bounds are inclusive: `from` starts at 00:00:00.000 and `to` ends at 23:59:59.999. */
+export function isWithinRange(
+  value: string | number | Date,
+  range: TicketDateRange | undefined,
+): boolean {
+  if (!range || (!range.from && !range.to)) return true;
+
+  const time = new Date(value).getTime();
+  if (range.from) {
+    const start = new Date(range.from);
+    start.setHours(0, 0, 0, 0);
+    if (time < start.getTime()) return false;
+  }
+  if (range.to) {
+    const end = new Date(range.to);
+    end.setHours(23, 59, 59, 999);
+    if (time > end.getTime()) return false;
+  }
+  return true;
 }
 
 export function matchesQuery(
   ticket: Ticket,
   query: TicketQueryState,
-  { usersById }: TicketQueryContext,
+  { usersById, createdRange }: TicketQueryContext,
   options: { ignorePill?: boolean } = {},
 ): boolean {
   if (!options.ignorePill && !matchesPill(ticket, query.pill)) return false;
+  if (!isWithinRange(ticket.createdAt, createdRange)) return false;
   if (query.priority !== "all" && ticket.priority !== query.priority) return false;
   if (query.area !== "all" && ticket.area !== query.area) return false;
   if (query.siteId !== "all" && ticket.siteId !== query.siteId) return false;
@@ -178,4 +214,39 @@ export function hasActiveFilters(query: TicketQueryState): boolean {
     query.siteId !== "all" ||
     query.search.trim().length > 0
   );
+}
+
+export interface TicketSummaryStats {
+  /** Every ticket in scope. */
+  total: number;
+  /** Not yet terminal: pending, in progress or on hold. */
+  open: number;
+  /** Created within the last 24 hours. */
+  createdLast24h: number;
+  inProgress: number;
+  resolved: number;
+}
+
+/**
+ * Headline counts for the KPI cards above the table. `now` is injectable so the
+ * "last 24 hours" window can be pinned in a probe or a test.
+ */
+export function summarizeTickets(
+  tickets: Ticket[],
+  now: Date = new Date(),
+): TicketSummaryStats {
+  const cutoff = now.getTime() - 24 * 60 * 60 * 1000;
+  let open = 0;
+  let createdLast24h = 0;
+  let inProgress = 0;
+  let resolved = 0;
+
+  for (const ticket of tickets) {
+    if (OPEN_STATUSES.includes(ticket.status)) open += 1;
+    if (new Date(ticket.createdAt).getTime() >= cutoff) createdLast24h += 1;
+    if (ticket.status === "in_progress") inProgress += 1;
+    if (ticket.status === "resolved") resolved += 1;
+  }
+
+  return { total: tickets.length, open, createdLast24h, inProgress, resolved };
 }

@@ -18,6 +18,7 @@ import {
   buildPillOptions,
   hasActiveFilters,
   isQuickFilter,
+  type TicketDateRange,
   type TicketQueryState,
 } from "../services/ticketQuery";
 import type { Ticket, TicketStatus, TicketView } from "@/types";
@@ -29,11 +30,14 @@ interface TicketsBrowserProps {
    * `Sin asignar` is meaningless on a page that only lists your own assignments.
    */
   showQuickFilters?: boolean;
+  /** Inclusive created-at window owned by the page header. */
+  createdRange?: TicketDateRange;
 }
 
 export function TicketsBrowser({
   tickets,
   showQuickFilters = false,
+  createdRange,
 }: TicketsBrowserProps) {
   const { user } = useAuth();
   const users = useUserStore((state) => state.items);
@@ -58,6 +62,13 @@ export function TicketsBrowser({
     [],
   );
 
+  // A date-range change comes from the page header, not from the toolbar, so reset paging here.
+  const [lastRange, setLastRange] = useState(createdRange);
+  if (lastRange !== createdRange) {
+    setLastRange(createdRange);
+    setPage(1);
+  }
+
   const usersById = useMemo(
     () => Object.fromEntries(users.map((u) => [u.id, u])),
     [users],
@@ -66,7 +77,10 @@ export function TicketsBrowser({
     () => Object.fromEntries(sites.map((s) => [s.id, s])),
     [sites],
   );
-  const context = useMemo(() => ({ usersById }), [usersById]);
+  const context = useMemo(
+    () => ({ usersById, createdRange }),
+    [usersById, createdRange],
+  );
 
   const filtered = useMemo(
     () => applyTicketQuery(tickets, filters, context),

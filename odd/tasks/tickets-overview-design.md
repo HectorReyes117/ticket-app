@@ -90,8 +90,10 @@ discards tickets created or edited in the session.
 
 S8 — Rows per page.
 Request: "filas por pagina".
-Acceptance: a `Filas por página` select with 10 / 20 / 50, default `20` (design value); changing it
-resets to page 1.
+Acceptance: a `Filas por página` select with 10 / 20 / 50; changing it resets to page 1.
+**Amended (see L6):** the default is `10`, not the design's `20`, because the seeded data set holds only
+14 tickets and a 20-row page always renders a single page — which would hide the new pagination
+entirely. One-line revert at `DEFAULT_PAGE_SIZE` in `ticketQuery.ts`.
 
 S9 — Pagination.
 Request: "la paginacion".
@@ -122,7 +124,7 @@ The generic improvements (counters, rows-per-page, pagination, extra selects, so
 |----|------|-------|-------|--------|----------|
 | T1 | Enrich the filter toolbar: pills with counts + quick filters, Área/Técnico selects, Limpiar filtros, Ordenar por | S4, S5, S11, S12 | inline | done | `ticketQuery` probe 34/34 pass; `npm run build` ok; eslint clean on touched files |
 | T2 | Table chrome + pagination: card header `Registro de Tickets`/`Mostrando X de Y`, refresh, results row, rows-per-page, page controls | S6, S7, S8, S9, S12 | inline | done | `ticketQuery` probe 57/57 pass (incl. a paging mirror); `npm run build` ok; eslint clean on `src/features/tickets` |
-| T3 | Page chrome: KPI cards, date-range filter, `+ Nueva Solicitud` button | S1, S2, S3 | inline | pending | — |
+| T3 | Page chrome: KPI cards, date-range filter, `+ Nueva Solicitud` button | S1, S2, S3 | inline | done | `ticketQuery` probe 84/84 pass; `npm run build` ok; eslint clean on touched files |
 | T4 | Distribution chart card below the table | S10 | inline | pending | — |
 
 ## Log
@@ -189,3 +191,31 @@ filtered set, page 99 clamps to page 2, the empty set reports `0 a 0` on one pag
 filter while on page 2 clamps back to page 1. Checks: `npm run build` ok, `eslint src/features/tickets`
 clean (fixing a real `react-refresh/only-export-components` error by moving the page-size constants
 into `ticketQuery.ts`).
+
+L7 — T3 delivered. New `DateRangeFilter.tsx` (`components/common`) — a Base UI `Popover` +
+`Calendar` in `range` mode, two months, `formatDate` label (`30 sep 2025 – 04 oct 2025`) and a clear
+control — plus a rebuilt `TicketsPage`: KPI cards, that date filter and a primary `+ Nueva Solicitud`
+button in the header.
+- KPIs (S1) reuse `KpiSection`/`KpiCard` and are computed by a new pure, testable
+  `summarizeTickets(tickets, now?)` in `ticketQuery.ts`: `Tickets Abiertos` = pending + in_progress +
+  on_hold (new `OPEN_STATUSES`), `Nuevos Tickets` = created in the last 24 h, `En Proceso`, `Resueltas`.
+  The design's `+15% vs hora anterior` deltas are placeholders and are replaced by true supporting
+  lines ("Pendientes, en proceso o en espera", …); no delta is fabricated (L4.1).
+- The date range (S2) travels as `createdRange` on `TicketQueryContext`, not as a toolbar control, so
+  it filters `createdAt` **and** shapes the faceted pill counts. Day bounds are inclusive
+  (`00:00:00.000` … `23:59:59.999`) via a new exported `isWithinRange`. `TicketsBrowser` gained a
+  `createdRange` prop and resets to page 1 when it changes.
+- Button wording (S3): `Nueva Solicitud`, matching the user's own words and the existing
+  `Crear Solicitud` sidebar entry rather than the design's `Nuevo Ticket`.
+- Extending the probe to 84/84 checks surfaced two real defects that were fixed before committing:
+  (a) `eslint react-refresh/only-export-components` on the new page-size constants (already fixed in
+  L6, re-confirmed here); (b) `react-hooks/set-state-in-effect` — my first cut reset the page from a
+  `useEffect`, which causes a cascading render, so it became React's documented render-time
+  adjustment (`if (lastRange !== createdRange) { setLastRange(...); setPage(1); }`).
+- Date-range coverage added to the probe: full span / open-ended bounds keep all 14 tickets,
+  a single-day window equals the manual same-day count and really narrows (`< 14`), windows entirely
+  before or after the data are empty, an inverted window is empty, and bounds are inclusive at both
+  ends. `summarizeTickets` verified with a pinned clock (`total 14`, `open 11`, `inProgress 6`,
+  `resolved 2`) and for the empty input.
+Checks: `npm run build` ok; `eslint` clean on `src/features/tickets`,
+`src/components/common/DateRangeFilter` and `src/pages/TicketsPage.tsx`.
