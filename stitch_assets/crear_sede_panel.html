@@ -1,0 +1,342 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><meta content="web_dashboard" name="shell-type"><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={"darkMode":"class","theme":{"extend":{"colors":{"secondary-fixed-dim":"#4edea3","tertiary-fixed":"#d5e6e0","surface-container-highest":"#dae2fd","tertiary-container":"#8e9e99","on-tertiary-container":"#263531","inverse-on-surface":"#eef0ff","surface-variant":"#dae2fd","on-tertiary-fixed-variant":"#3b4a46","on-primary-fixed":"#002112","primary":"#006c46","surface-bright":"#faf8ff","on-background":"#131b2e","on-surface-variant":"#3d4a41","surface-container-high":"#e2e7ff","error-container":"#ffdad6","tertiary-fixed-dim":"#b9cac5","primary-container":"#00b074","inverse-primary":"#53de9e","surface-tint":"#006c46","on-secondary-fixed":"#002113","on-error":"#ffffff","surface-container-lowest":"#ffffff","on-secondary-container":"#00714d","outline":"#6c7a70","secondary":"#006c49","on-error-container":"#93000a","primary-fixed":"#73fbb8","on-secondary":"#ffffff","on-primary":"#ffffff","on-primary-fixed-variant":"#005233","background":"#faf8ff","on-primary-container":"#003a23","on-secondary-fixed-variant":"#005236","surface-container":"#eaedff","surface":"#faf8ff","on-surface":"#131b2e","outline-variant":"#bccabf","surface-container-low":"#f2f3ff","on-tertiary":"#ffffff","surface-dim":"#d2d9f4","secondary-container":"#6cf8bb","error":"#ba1a1a","on-tertiary-fixed":"#101e1b","inverse-surface":"#283044","primary-fixed-dim":"#53de9e","tertiary":"#52625d","secondary-fixed":"#6ffbbe"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"space-md":"1rem","margin":"2rem","space-xs":"0.25rem","space-sm":"0.5rem","gutter":"1.5rem","space-xl":"2rem","space-lg":"1.5rem"},"fontFamily":{"metric-xl":["Plus Jakarta Sans"],"headline-lg":["Plus Jakarta Sans"],"headline-md":["Plus Jakarta Sans"],"display-lg":["Plus Jakarta Sans"],"body-sm":["Plus Jakarta Sans"],"headline-sm":["Plus Jakarta Sans"],"label-md":["Plus Jakarta Sans"],"body-lg":["Plus Jakarta Sans"],"body-md":["Plus Jakarta Sans"],"label-sm":["Plus Jakarta Sans"]},"fontSize":{"metric-xl":["32px",{"lineHeight":"38px","fontWeight":"700"}],"headline-lg":["28px",{"lineHeight":"36px","fontWeight":"700"}],"headline-md":["20px",{"lineHeight":"28px","fontWeight":"600"}],"display-lg":["36px",{"lineHeight":"44px","fontWeight":"700"}],"body-sm":["13px",{"lineHeight":"18px","fontWeight":"400"}],"headline-sm":["16px",{"lineHeight":"24px","fontWeight":"600"}],"label-md":["13px",{"lineHeight":"16px","fontWeight":"600"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"label-sm":["11px",{"lineHeight":"14px","fontWeight":"600"}]}}}}</script></head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest z-50 flex flex-col justify-between shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="flex flex-col"><div class="h-16 px-space-md flex items-center gap-space-sm"><div class="w-9 h-9 rounded-lg bg-primary-container flex items-center justify-center text-on-primary font-headline-sm text-headline-sm"><span class="material-symbols-outlined text-[20px]">confirmation_number</span></div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-on-surface leading-tight">TicketApp</span><span class="font-label-sm text-label-sm text-primary tracking-wide uppercase">Ticket Operations</span></div></div><div class="px-space-md py-space-sm"><span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Navegación Principal</span></div><nav class="flex flex-col gap-1 px-space-sm" data-active-classes="bg-surface-container text-primary font-headline-sm rounded-lg"><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all" data-path="dashboard" href="#"><span class="material-symbols-outlined text-[20px]">dashboard</span><span class="font-body-md text-body-md">Dashboard</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all" data-path="todas-las-solicitudes" href="#"><span class="material-symbols-outlined text-[20px]">inbox</span><span class="font-body-md text-body-md">Todas las Solicitudes</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all" data-path="mis-asignaciones" href="#"><span class="material-symbols-outlined text-[20px]">assignment_ind</span><span class="font-body-md text-body-md">Mis Asignaciones</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all" data-path="crear-solicitud" href="#"><span class="material-symbols-outlined text-[20px]">add_circle</span><span class="font-body-md text-body-md">Crear Solicitud</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all" data-path="gestion-de-personal-usuarios" href="#"><span class="material-symbols-outlined text-[20px]">group</span><span class="font-body-md text-body-md">Gestión de Personal / Usuarios</span></a><a aria-current="page" class="flex items-center gap-space-sm px-space-md py-2.5 transition-all bg-surface-container text-primary font-headline-sm rounded-lg" data-path="sedes-y-ubicaciones" href="#"><span class="material-symbols-outlined text-[20px]">location_city</span><span class="font-body-md text-body-md">Sedes y Ubicaciones</span></a><a class="flex items-center gap-space-sm px-space-md py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-all" data-path="configuracion" href="#"><span class="material-symbols-outlined text-[20px]">settings</span><span class="font-body-md text-body-md">Configuración</span></a></nav></div><div class="p-space-md m-space-sm rounded-xl bg-surface-container-low flex items-center justify-between"><div class="flex items-center gap-space-sm min-w-0"><img alt="Carlos Mendoza" class="w-9 h-9 rounded-full object-cover shrink-0" src="https://lh3.googleusercontent.com/aida/AEtjO1XMtQ6ddLdm4Not-lGA-I0IQMgbJ40o3F8zlN6u5NZy6B44mzFhIYLFsG894lcWHpSQilFjWI0zp2HTDDCRBQE-UdLbvDDA_kOj1x49mbxKZFUoBugGIqNJp3ESVDK7pemGphr7CJsRQs3q4WOdggRIAW-kJs9uIk1tDJ9XtJjUfdzfPV-UnFGtuoDqSmXjIdfjroR46v8ShS4kTRoFxS_s9Uox93CpVfjOnkFq1UX25DEwzI-wKE_30v_n"><div class="flex flex-col min-w-0"><span class="font-headline-sm text-body-sm text-on-surface truncate">Carlos Mendoza</span><span class="font-label-sm text-label-sm text-on-surface-variant truncate">Admin Operativo</span></div></div><button class="p-1 text-on-surface-variant hover:text-primary rounded-lg transition-colors" title="Cerrar sesión" type="button"><span class="material-symbols-outlined text-[18px]">logout</span></button></div></aside><div class="pl-64"><header class="fixed top-0 left-64 right-0 h-16 bg-surface-container-lowest/90 backdrop-blur-xl z-40 shadow-[0_1px_8px_rgba(0,0,0,0.04)] px-space-xl flex items-center justify-between gap-space-lg"><div class="relative flex-1 max-w-xl"><span class="material-symbols-outlined absolute left-space-md top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span><input class="w-full pl-10 pr-12 py-2 bg-surface rounded-lg font-body-sm text-body-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-1 focus:ring-primary-container transition-all" placeholder="Buscar tickets, sedes, áreas o personal..." type="text"><span class="absolute right-space-md top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant font-label-sm text-label-sm">⌘K</span></div><div class="flex items-center gap-space-md shrink-0"><button class="flex items-center gap-space-xs px-space-md py-2 rounded-lg bg-primary-container text-on-primary font-headline-sm text-body-sm hover:opacity-95 transition-opacity shadow-[0_4px_12px_rgba(0,176,116,0.2)]" type="button"><span class="material-symbols-outlined text-[18px]">add_location_alt</span><span class="">+ Nueva Sede / Ubicación</span></button><button class="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors" title="Alternar Tema" type="button"><span class="material-symbols-outlined text-[20px]">dark_mode</span></button><div class="relative"><button class="p-2 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg transition-colors" title="Notificaciones" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary-container"></span></button></div><div class="flex items-center gap-space-sm pl-space-sm"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1XMtQ6ddLdm4Not-lGA-I0IQMgbJ40o3F8zlN6u5NZy6B44mzFhIYLFsG894lcWHpSQilFjWI0zp2HTDDCRBQE-UdLbvDDA_kOj1x49mbxKZFUoBugGIqNJp3ESVDK7pemGphr7CJsRQs3q4WOdggRIAW-kJs9uIk1tDJ9XtJjUfdzfPV-UnFGtuoDqSmXjIdfjroR46v8ShS4kTRoFxS_s9Uox93CpVfjOnkFq1UX25DEwzI-wKE_30v_n"><div class="hidden xl:flex flex-col text-left"><span class="font-label-md text-label-md text-on-surface leading-tight">Carlos Mendoza</span><span class="font-label-sm text-label-sm text-primary">En línea</span></div></div></div></header><main class="w-full pt-16 bg-surface min-h-screen px-space-xl py-space-xl"><div class="flex flex-col w-full relative">
+<!-- BACKGROUND BEHIND DRAWER: Visual representation of Sedes y Ubicaciones list & map (blurred & dimmed) -->
+<div aria-hidden="true" class="w-full filter blur-[3px] opacity-40 pointer-events-none select-none">
+<!-- Top Action Bar of background view -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md mb-space-lg">
+<div class="flex flex-col">
+<div class="flex items-center gap-space-xs text-on-surface-variant font-label-md text-label-md">
+<span class="">Configuración ITSM</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="text-primary font-headline-sm">Sedes y Ubicaciones Físicas</span>
+</div>
+<h1 class="font-display-lg text-display-lg text-on-surface tracking-tight mt-1">Infraestructura Físico-Operativa</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Gestión de campus corporativos, centros de cómputo y distribución de personal técnico en sitio.</p>
+</div>
+<div class="flex items-center gap-space-sm shrink-0">
+<button class="px-space-md py-2.5 rounded-lg bg-surface-container-low text-on-surface font-headline-sm text-body-sm shadow-sm flex items-center gap-space-xs" type="button">
+<span class="material-symbols-outlined text-[18px]">download</span> Exportar Catálogo
+        </button>
+<button class="px-space-md py-2.5 rounded-lg bg-primary-container text-on-primary font-headline-sm text-body-sm shadow-md flex items-center gap-space-xs" type="button">
+<span class="material-symbols-outlined text-[18px]">add_location_alt</span> + Nueva Sede
+        </button>
+</div>
+</div>
+<!-- Background Metrics -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-gutter mb-space-lg">
+<div class="p-space-lg rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Sedes Activas</span>
+<span class="font-metric-xl text-metric-xl text-on-surface my-1">14</span>
+<span class="font-label-sm text-label-sm text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> 100% conectadas al Core
+        </span>
+</div>
+<div class="p-space-lg rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Centros de Datos (DC)</span>
+<span class="font-metric-xl text-metric-xl text-on-surface my-1">3</span>
+<span class="font-label-sm text-label-sm text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">shield</span> Climatización &amp; Energía Dual
+        </span>
+</div>
+<div class="p-space-lg rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Personal Presencial Asignado</span>
+<span class="font-metric-xl text-metric-xl text-on-surface my-1">1,840</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Capacidad global: 82%</span>
+</div>
+<div class="p-space-lg rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Custodios Técnicos L2/L3</span>
+<span class="font-metric-xl text-metric-xl text-on-surface my-1">28</span>
+<span class="font-label-sm text-label-sm text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">verified_user</span> Cobertura de turno 24/7
+        </span>
+</div>
+</div>
+<!-- Background Table & Mini Map Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+<div class="lg:col-span-2 bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden p-space-lg">
+<div class="flex items-center justify-between pb-space-md">
+<h2 class="font-headline-md text-headline-md text-on-surface">Inventario de Sedes</h2>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Mostrando 4 de 14 registradas</span>
+</div>
+<div class="space-y-3">
+<div class="p-space-md rounded-lg bg-surface-container-low flex items-center justify-between">
+<div class="flex items-center gap-space-md">
+<span class="material-symbols-outlined text-primary text-[28px]">apartment</span>
+<div>
+<p class="font-headline-sm text-headline-sm text-on-surface">Campus Central El Bosque</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Av. Apoquindo 3000, Las Condes • ID #SED-001</p>
+</div>
+</div>
+<span class="px-space-sm py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm">Operativa</span>
+</div>
+<div class="p-space-md rounded-lg bg-surface-container-low flex items-center justify-between">
+<div class="flex items-center gap-space-md">
+<span class="material-symbols-outlined text-primary text-[28px]">dns</span>
+<div>
+<p class="font-headline-sm text-headline-sm text-on-surface">Datacenter Primario Quilicura</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Parque Industrial Panamericana • ID #DC-010</p>
+</div>
+</div>
+<span class="px-space-sm py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm">Nivel Tier III</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg flex flex-col justify-between">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-space-sm">Distribución Metropolitana</h2>
+<div class="w-full h-44 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined text-[48px]">map</span>
+</div>
+</div>
+</div>
+</div>
+<!-- FIXED MODAL OVERLAY BACKDROP -->
+<div class="fixed inset-0 bg-on-surface/40 backdrop-blur-sm z-50 transition-opacity duration-300" id="drawerBackdrop"></div>
+<!-- SLIDING DRAWER MODAL (RIGHT SIDE, 520px) -->
+<aside aria-labelledby="drawerTitle" aria-modal="true" class="fixed right-0 top-0 bottom-0 w-full sm:w-[520px] bg-surface-container-lowest z-50 shadow-2xl flex flex-col justify-between overflow-hidden animate-in slide-in-from-right duration-300" id="sedeDrawer" role="dialog">
+<!-- DRAWER HEADER (Pinned) -->
+<header class="p-space-lg bg-surface-container-lowest shrink-0 shadow-[0_2px_8px_rgba(0,0,0,0.03)] flex flex-col gap-space-sm">
+<div class="flex items-start justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="w-12 h-12 rounded-xl bg-secondary-fixed/40 flex items-center justify-center text-primary shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[26px]">corporate_fare</span>
+</div>
+<div class="flex flex-col min-w-0">
+<h2 class="font-headline-lg text-headline-md sm:text-headline-lg text-on-surface leading-tight truncate" id="drawerTitle">
+              Nueva Sede / Ubicación Física
+            </h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">
+              Registro en infraestructura TicketApp y asignación de responsables
+            </p>
+</div>
+</div>
+<button class="p-1.5 text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg transition-colors shrink-0" onclick="document.getElementById('sedeDrawer').classList.add('hidden'); document.getElementById('drawerBackdrop').classList.add('hidden');" title="Cerrar ventana" type="button">
+<span class="material-symbols-outlined text-[22px]">close</span>
+</button>
+</div>
+<!-- Context Badges -->
+<div class="flex flex-wrap items-center gap-space-xs mt-1">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-surface-container-lowest text-on-surface font-label-md text-label-md shadow-sm"><span class="material-symbols-outlined text-[14px] text-primary">dns</span>Sala Servidores<button class="ml-1 text-on-surface-variant hover:text-error transition-colors" title="Quitar" type="button"><span class="material-symbols-outlined text-[14px]">close</span></button></span>
+<span class="px-2 py-0.5 rounded-md bg-surface-container text-on-surface-variant font-label-sm text-label-sm">
+          Paso 1 de 1 • Infraestructura ITSM
+        </span>
+</div>
+</header>
+<!-- DRAWER SCROLLABLE FORM BODY -->
+<div class="flex-1 overflow-y-auto px-space-lg py-space-md space-y-space-lg overscroll-contain">
+<!-- SECCIÓN 1: DATOS GENERALES -->
+<section class="flex flex-col gap-space-md">
+<div class="flex items-center gap-space-xs pb-1">
+<span class="material-symbols-outlined text-primary text-[18px]">domain_add</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface tracking-wide uppercase">1. Datos Generales de la Sede</h3>
+</div>
+<!-- Nombre Oficial -->
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface flex items-center justify-between">
+<span class="">Nombre Oficial de la Sede / Instalación <span class="text-error">*</span></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-normal">Identificador primario</span>
+</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">location_on</span>
+<input class="w-full pl-9 pr-space-md py-2.5 bg-surface-container-low rounded-lg font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary-container transition-all" placeholder="ej. Sede Central Datacenter Piso 2 o Edificio Las Lilas" type="text" value="Sede Central Datacenter Piso 2">
+</div>
+</div>
+<!-- Radio Chips: Tipo de Instalación -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface">Tipo de Instalación <span class="text-error">*</span></label>
+<div class="grid grid-cols-2 gap-space-xs" id="tipoInstalacionGroup">
+<label class="flex items-center gap-2 p-2.5 rounded-lg bg-secondary-fixed/30 text-on-primary-container font-headline-sm text-body-sm cursor-pointer transition-all hover:bg-secondary-fixed/50">
+<input checked="" class="accent-primary" name="tipo_instalacion" type="radio" value="campus">
+<span class="truncate">Campus / Edificio</span>
+</label>
+<label class="flex items-center gap-2 p-2.5 rounded-lg bg-surface-container-low text-on-surface font-body-sm text-body-sm cursor-pointer transition-all hover:bg-surface-container">
+<input class="accent-primary" name="tipo_instalacion" type="radio" value="dc">
+<span class="truncate">Centro Datos (DC)</span>
+</label>
+<label class="flex items-center gap-2 p-2.5 rounded-lg bg-surface-container-low text-on-surface font-body-sm text-body-sm cursor-pointer transition-all hover:bg-surface-container">
+<input class="accent-primary" name="tipo_instalacion" type="radio" value="regional">
+<span class="truncate">Sucursal Regional</span>
+</label>
+<label class="flex items-center gap-2 p-2.5 rounded-lg bg-surface-container-low text-on-surface font-body-sm text-body-sm cursor-pointer transition-all hover:bg-surface-container">
+<input class="accent-primary" name="tipo_instalacion" type="radio" value="almacen">
+<span class="truncate">Almacén / Taller IT</span>
+</label>
+</div>
+</div>
+<!-- Código Identificador Corporativo -->
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface">Código Identificador / ID Corporativo <span class="text-error">*</span></label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">tag</span>
+<input class="w-full pl-9 pr-space-md py-2.5 bg-surface-container-low rounded-lg font-headline-sm text-body-md text-primary focus:outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary-container uppercase transition-all" placeholder="#SED-0840" type="text" value="#SED-0840">
+</div>
+</div>
+<!-- Dirección Física Completa -->
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface">Dirección Física Completa <span class="text-error">*</span></label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">signpost</span>
+<input class="w-full pl-9 pr-space-md py-2.5 bg-surface-container-low rounded-lg font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary-container transition-all" placeholder="Calle, Número, Edificio, Número de Acceso" type="text" value="Av. Andrés Bello 2711, Las Condes">
+</div>
+</div>
+<!-- Ciudad / Comuna & Código Postal (2 columnas) -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm">
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface">Ciudad / Comuna / Región <span class="text-error">*</span></label>
+<input class="w-full px-space-md py-2.5 bg-surface-container-low rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary-container transition-all" placeholder="ej. Santiago / Las Condes" type="text" value="Santiago / Las Condes / RM">
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface">Código Postal / Referencia</label>
+<input class="w-full px-space-md py-2.5 bg-surface-container-low rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary-container transition-all" placeholder="7550000 / Frente a Metro Tobalaba" type="text" value="7550000 • Frente a Metro Tobalaba">
+</div>
+</div>
+</section>
+<!-- SECCIÓN 2: UBICACIONES INTERNAS & ESTRUCTURA -->
+<section class="flex flex-col gap-space-md pt-space-xs">
+<div class="flex items-center gap-space-xs pb-1">
+<span class="material-symbols-outlined text-primary text-[18px]">account_tree</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface tracking-wide uppercase">2. Ubicaciones Internas &amp; Estructura</h3>
+</div>
+<!-- Niveles o Pisos Disponibles -->
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface">Niveles o Pisos Disponibles</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">stairs</span>
+<input class="w-full pl-9 pr-space-md py-2.5 bg-surface-container-low rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary-container transition-all" placeholder="ej. Piso 1, Piso 2, Subterráneo -1" type="text" value="Subterráneo -1, Piso 1 (Recepción), Piso 2 (IT &amp; Servidores)">
+</div>
+</div>
+<!-- Salas Técnicas / Áreas Específicas (Tags interactivos) -->
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<label class="font-label-md text-label-md text-on-surface">Salas Técnicas / Áreas Específicas</label>
+<span class="font-label-sm text-label-sm text-primary font-semibold">3 añadidas</span>
+</div>
+<div class="flex flex-wrap items-center gap-space-xs p-space-sm rounded-lg bg-surface-container-low min-h-[48px]">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-surface-container-lowest text-on-surface font-label-md text-label-md shadow-sm"><span class="material-symbols-outlined text-[14px] text-primary">dns</span>Sala Servidores<button class="ml-1 text-on-surface-variant hover:text-error transition-colors" title="Quitar" type="button"><span class="material-symbols-outlined text-[14px]">close</span></button></span>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-surface-container-lowest text-on-surface font-label-md text-label-md shadow-sm">
+<span class="material-symbols-outlined text-[14px] text-primary">memory</span>
+              Datacenter Nivel 1
+              <button class="ml-1 text-on-surface-variant hover:text-error transition-colors" title="Quitar" type="button">
+<span class="material-symbols-outlined text-[14px]">close</span>
+</button>
+</span>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-surface-container-lowest text-on-surface font-label-md text-label-md shadow-sm">
+<span class="material-symbols-outlined text-[14px] text-primary">build</span>
+              Taller Soporte IT
+              <button class="ml-1 text-on-surface-variant hover:text-error transition-colors" title="Quitar" type="button">
+<span class="material-symbols-outlined text-[14px]">close</span>
+</button>
+</span>
+<button class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-secondary-fixed/50 hover:bg-secondary-fixed text-on-secondary-fixed font-headline-sm text-label-sm transition-colors" type="button">
+<span class="material-symbols-outlined text-[14px]">add</span>
+              Añadir Espacio
+            </button>
+</div>
+</div>
+<!-- Capacidad Estimada & Centro de Costos (2 columnas) -->
+<div class="grid grid-cols-1 gap-space-sm">
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface">Capacidad Estimada Personal</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">groups</span>
+<input class="w-full pl-9 pr-space-md py-2.5 bg-surface-container-low rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary-container transition-all" placeholder="ej. 350 personas" type="text" value="350 personas">
+</div>
+</div>
+
+</div>
+</section>
+<!-- SECCIÓN 3: CUSTODIO / RESPONSABLE TÉCNICO EN SITIO -->
+<section class="flex flex-col gap-space-md pt-space-xs">
+<div class="flex items-center gap-space-xs pb-1">
+<span class="material-symbols-outlined text-primary text-[18px]">badge</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface tracking-wide uppercase">3. Custodio / Responsable Técnico en Sitio</h3>
+</div>
+<!-- Selector con Búsqueda de Colaborador -->
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface">Seleccionar Custodio o Encargado Titular <span class="text-error">*</span></label>
+<div class="p-space-sm rounded-lg bg-surface-container-low flex items-center justify-between gap-space-sm hover:bg-surface-container transition-colors cursor-pointer">
+<div class="flex items-center gap-space-sm min-w-0">
+<img alt="Carlos Mendoza" class="w-9 h-9 rounded-full object-cover shrink-0" src="https://lh3.googleusercontent.com/aida/AEtjO1XMtQ6ddLdm4Not-lGA-I0IQMgbJ40o3F8zlN6u5NZy6B44mzFhIYLFsG894lcWHpSQilFjWI0zp2HTDDCRBQE-UdLbvDDA_kOj1x49mbxKZFUoBugGIqNJp3ESVDK7pemGphr7CJsRQs3q4WOdggRIAW-kJs9uIk1tDJ9XtJjUfdzfPV-UnFGtuoDqSmXjIdfjroR46v8ShS4kTRoFxS_s9Uox93CpVfjOnkFq1UX25DEwzI-wKE_30v_n">
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-body-sm text-on-surface truncate">Carlos Mendoza</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Especialista L2 / TI &amp; Redes • ID #USR-102</span>
+</div>
+</div>
+<div class="flex items-center gap-1 shrink-0 text-primary">
+<span class="font-label-sm text-label-sm font-semibold">Cambiar</span>
+<span class="material-symbols-outlined text-[18px]">unfold_more</span>
+</div>
+</div>
+</div>
+<!-- Teléfono en Sitio & Anexo IP (2 columnas) -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-sm">
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface">Teléfono de Contacto en Sitio</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">phone_in_talk</span>
+<input class="w-full pl-9 pr-space-md py-2.5 bg-surface-container-low rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary-container transition-all" placeholder="+56 2 ..." type="text" value="+56 2 2840 9200">
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface">Anexo IP de Guardia</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">headset_mic</span>
+<input class="w-full pl-9 pr-space-md py-2.5 bg-surface-container-low rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary-container transition-all" placeholder="ej. 8401" type="text" value="Ext. 8401">
+</div>
+</div>
+</div>
+<!-- Notas de Acceso Físico / Protocolo de Seguridad -->
+<div class="flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<label class="font-label-md text-label-md text-on-surface">Notas de Acceso Físico / Protocolo de Seguridad</label>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Visible para despachadores</span>
+</div>
+<textarea class="w-full p-space-md bg-surface-container-low rounded-lg font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary-container transition-all resize-none" placeholder="Indicar condiciones de acceso, tarjetas RFID, credenciales o precauciones en racks..." rows="3">Acceso restringido con tarjeta biométrica 24/7. Notificar a guardia antes de ingresar contratistas. Tableros eléctricos ubicados en sector norponiente.</textarea>
+</div>
+<!-- Mini Notice Banner -->
+<div class="p-space-md rounded-xl bg-surface-container-low flex items-start gap-space-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-primary text-[20px] shrink-0 mt-0.5">verified</span>
+<p class="font-body-sm text-body-sm leading-snug">
+            Al registrar esta sede, estará disponible de forma inmediata en los selectores de incidentes, solicitudes de hardware e inventario de activos físicos de TicketApp.
+          </p>
+</div>
+</section>
+</div>
+<!-- DRAWER FOOTER (Pinned) -->
+<footer class="p-space-lg bg-surface-container-lowest shrink-0 shadow-[0_-4px_12px_rgba(0,0,0,0.03)] flex items-center justify-end gap-space-sm">
+<button class="px-space-lg py-2.5 rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high font-headline-sm text-body-sm transition-all" onclick="document.getElementById('sedeDrawer').classList.add('hidden'); document.getElementById('drawerBackdrop').classList.add('hidden');" type="button">
+        Cancelar
+      </button>
+<button class="px-space-xl py-2.5 rounded-lg bg-primary-container hover:opacity-95 text-on-primary font-headline-sm text-body-sm shadow-[0_4px_14px_rgba(0,176,116,0.25)] flex items-center gap-space-xs transition-all" type="button">
+<span class="material-symbols-outlined text-[18px]">add_business</span>
+<span class="">Crear Sede y Activar Ubicación</span>
+</button>
+</footer>
+</aside>
+</div>
+<script>
+  // Handle Radio Chip Visual Toggle for Tipo de Instalación
+  document.querySelectorAll('#tipoInstalacionGroup label').forEach(label => {
+    label.addEventListener('click', function() {
+      document.querySelectorAll('#tipoInstalacionGroup label').forEach(l => {
+        l.classList.remove('bg-secondary-fixed/30', 'text-on-primary-container', 'font-headline-sm');
+        l.classList.add('bg-surface-container-low', 'text-on-surface', 'font-body-sm');
+      });
+      this.classList.remove('bg-surface-container-low', 'text-on-surface', 'font-body-sm');
+      this.classList.add('bg-secondary-fixed/30', 'text-on-primary-container', 'font-headline-sm');
+    });
+  });
+
+  // Backdrop click closes drawer
+  document.getElementById('drawerBackdrop')?.addEventListener('click', () => {
+    document.getElementById('sedeDrawer')?.classList.add('hidden');
+    document.getElementById('drawerBackdrop')?.classList.add('hidden');
+  });
+</script></main></div>
+
+
+
+
+
+
+
+</body></html>
