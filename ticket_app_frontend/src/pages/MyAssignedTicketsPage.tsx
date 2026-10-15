@@ -49,13 +49,12 @@ export function MyAssignedTicketsPage() {
   const [hoursDescription, setHoursDescription] = useState("");
   const [sortBy, setSortBy] = useState<"recent" | "priority">("recent");
 
-  // Filter assigned tickets for active user, fallback to first technician tickets or all tickets for display
+  // Filter assigned tickets strictly for active user
   const assignedTickets = useMemo(() => {
     if (!user) return [];
-    const directAssigned = allTickets.filter((t) => t.assigneeId === user.id);
-    if (directAssigned.length > 0) return directAssigned;
-    // If current logged user has no tickets assigned, show all tickets to ensure UI matches screen demo
-    return allTickets.slice(0, 5);
+    return allTickets.filter(
+      (t) => t.assigneeId === user.id || (user.employeeCode && t.assigneeId === user.employeeCode),
+    );
   }, [allTickets, user]);
 
   const sortedTickets = useMemo(() => {
@@ -67,14 +66,16 @@ export function MyAssignedTicketsPage() {
     });
   }, [assignedTickets, sortBy]);
 
-  // KPIs
+  // KPIs calculados sobre data 100% real
   const highPriorityCount = assignedTickets.filter(
     (t) => t.priority === "high" || t.priority === "critical",
   ).length;
   const inProgressCount = assignedTickets.filter(
     (t) => t.status === "in_progress",
   ).length;
-  const resolvedCount = allTickets.filter((t) => t.status === "resolved").length;
+  const resolvedCount = assignedTickets.filter((t) => t.status === "resolved").length;
+  const totalAssigned = assignedTickets.length;
+  const effectivenessRate = totalAssigned > 0 ? Math.round((resolvedCount / totalAssigned) * 100) : 100;
 
   const handleSaveObservation = (e: React.FormEvent) => {
     e.preventDefault();
@@ -218,15 +219,15 @@ export function MyAssignedTicketsPage() {
           </div>
           <div className="my-2.5 flex items-baseline gap-2">
             <span className="text-3xl font-bold tracking-tight text-foreground">
-              96.4%
+              {effectivenessRate}%
             </span>
             <span className="text-xs font-bold text-brand bg-brand-soft px-2 py-0.5 rounded-full">
-              Meta &gt;95%
+              {totalAssigned > 0 ? `${resolvedCount}/${totalAssigned}` : "Al día"}
             </span>
           </div>
           <div className="flex items-center gap-1.5 text-xs text-brand font-medium">
             <CheckCircle2 className="size-3.5" />
-            <span>Resolución exitosa ({resolvedCount} cerrados)</span>
+            <span>Resolución de tus casos ({resolvedCount} concluidos)</span>
           </div>
         </div>
       </section>
@@ -256,8 +257,21 @@ export function MyAssignedTicketsPage() {
           </div>
 
           {/* Ticket Cards Stream */}
-          {sortedTickets.map((ticket) => {
-            const requestor = users.find((u) => u.id === ticket.requestorId);
+          {sortedTickets.length === 0 ? (
+            <div className="bg-card p-12 rounded-xl border border-border shadow-xs text-center flex flex-col items-center justify-center gap-3">
+              <div className="size-12 rounded-2xl bg-brand-soft text-brand flex items-center justify-center">
+                <Inbox className="size-6" />
+              </div>
+              <div className="flex flex-col gap-1 max-w-sm">
+                <span className="text-sm font-bold text-foreground">No tienes tickets asignados</span>
+                <p className="text-xs text-muted-foreground">
+                  Actualmente no tienes solicitudes en tu guardia o cola operativa.
+                </p>
+              </div>
+            </div>
+          ) : (
+            sortedTickets.map((ticket) => {
+              const requestor = users.find((u) => u.id === ticket.requestorId);
             const site = sites.find((s) => s.id === ticket.siteId);
             const latestActivity = ticket.activities && ticket.activities.length > 0
               ? ticket.activities[ticket.activities.length - 1]
@@ -409,7 +423,8 @@ export function MyAssignedTicketsPage() {
                 </div>
               </article>
             );
-          })}
+          })
+          )}
         </section>
 
         {/* RIGHT COLUMN: Focused Side Panel (4 cols ~ 34%) */}
@@ -466,10 +481,10 @@ export function MyAssignedTicketsPage() {
                   </div>
                   <div className="flex flex-col">
                     <span className="text-xs font-semibold text-foreground">Tickets Concluidos</span>
-                    <span className="text-[11px] text-muted-foreground">Esta semana</span>
+                    <span className="text-[11px] text-muted-foreground">En tu historial</span>
                   </div>
                 </div>
-                <span className="text-sm font-bold text-foreground">27</span>
+                <span className="text-sm font-bold text-foreground">{resolvedCount}</span>
               </div>
 
               <div className="flex items-center justify-between p-3 rounded-xl bg-muted/60">
@@ -478,11 +493,11 @@ export function MyAssignedTicketsPage() {
                     <Clock className="size-4" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-xs font-semibold text-foreground">Tiempo Prom. Resolución</span>
-                    <span className="text-[11px] text-muted-foreground">Promedio por ticket</span>
+                    <span className="text-xs font-semibold text-foreground">Casos en Proceso</span>
+                    <span className="text-[11px] text-muted-foreground">Diagnóstico activo</span>
                   </div>
                 </div>
-                <span className="text-sm font-bold text-foreground">1h 35m</span>
+                <span className="text-sm font-bold text-foreground">{inProgressCount}</span>
               </div>
 
               <div className="flex items-center justify-between p-3 rounded-xl bg-muted/60">
@@ -491,11 +506,11 @@ export function MyAssignedTicketsPage() {
                     <CheckCircle2 className="size-4" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-xs font-semibold text-foreground">Satisfacción del Usuario</span>
-                    <span className="text-[11px] text-muted-foreground">Calificación positiva</span>
+                    <span className="text-xs font-semibold text-foreground">Total Asignaciones</span>
+                    <span className="text-[11px] text-muted-foreground">Volumen total</span>
                   </div>
                 </div>
-                <span className="text-sm font-bold text-foreground">98%</span>
+                <span className="text-sm font-bold text-foreground">{totalAssigned}</span>
               </div>
             </div>
 
@@ -513,7 +528,7 @@ export function MyAssignedTicketsPage() {
                     className="text-brand stroke-current"
                     d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                     fill="none"
-                    strokeDasharray="96.4, 100"
+                    strokeDasharray={`${effectivenessRate}, 100`}
                     strokeLinecap="round"
                     strokeWidth="3.5"
                   />
@@ -523,13 +538,13 @@ export function MyAssignedTicketsPage() {
                     x="18"
                     y="20.5"
                   >
-                    96%
+                    {effectivenessRate}%
                   </text>
                 </svg>
                 <div className="flex flex-col text-xs text-muted-foreground">
-                  <span className="text-foreground font-semibold">27 tickets cerrados</span>
-                  <span>26 resueltos exitosamente</span>
-                  <span className="text-brand font-semibold text-[11px]">+4% vs semana previa</span>
+                  <span className="text-foreground font-semibold">{totalAssigned} tickets asignados</span>
+                  <span>{resolvedCount} concluidos exitosamente</span>
+                  <span className="text-brand font-semibold text-[11px]">{inProgressCount} en curso</span>
                 </div>
               </div>
             </div>

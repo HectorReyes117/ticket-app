@@ -63,6 +63,7 @@ export function TicketsBrowser({
   );
 
   const fetchTickets = useTicketStore((state) => state.fetchTickets);
+  const ticketsLoading = useTicketStore((state) => state.loading);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -199,7 +200,14 @@ export function TicketsBrowser({
         onViewChange={setView}
       />
 
-      {filtered.length === 0 ? (
+      {ticketsLoading ? (
+        <Card className="rounded-b-2xl rounded-t-none border-t-0 shadow-xs">
+          <CardContent className="py-12 flex flex-col items-center justify-center gap-2 text-center text-muted-foreground">
+            <RefreshCw className="size-6 animate-spin text-brand" />
+            <span className="text-xs font-semibold">Consultando solicitudes en tiempo real...</span>
+          </CardContent>
+        </Card>
+      ) : filtered.length === 0 ? (
         <Card className="rounded-b-2xl rounded-t-none border-t-0 shadow-xs">
           <CardContent className="pt-6">
             <EmptyState

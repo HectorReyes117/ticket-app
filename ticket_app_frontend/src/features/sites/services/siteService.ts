@@ -38,8 +38,11 @@ export function mapBackendLocationToSite(dto: BackendLocationDto): Site {
   };
 }
 
-export async function listSites(): Promise<Site[]> {
-  const data = await api.get<BackendLocationDto[]>("/locations");
+export async function listSites(params?: {
+  search?: string;
+  activeOnly?: boolean;
+}): Promise<Site[]> {
+  const data = await api.get<BackendLocationDto[]>("/locations", params);
   return (data || []).map(mapBackendLocationToSite);
 }
 

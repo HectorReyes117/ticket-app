@@ -62,6 +62,7 @@ export function mapBackendDtoToUser(dto: BackendUserDto): User {
 }
 
 export async function listUsers(params?: {
+  search?: string;
   role?: string;
   locationId?: number;
   activeOnly?: boolean;

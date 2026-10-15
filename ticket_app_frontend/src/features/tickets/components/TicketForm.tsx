@@ -120,37 +120,19 @@ export function TicketForm() {
   const [form, setForm] = useState<FormState>({
     requestorId: user?.id ?? "",
     siteId: user?.siteId ?? (sites[0]?.id || ""),
-    area: sites[0]?.areas[0] || "Datacenter Piso 1",
+    area: sites[0]?.areas[0] || "",
     categoryKey: "infra",
     requestType: "incident",
-    priority: "high",
-    impact: "critical",
-    title: "Falla de conmutación en enlace troncal de fibra óptica sala de servidores Piso 1",
-    description:
-      "Se detectó una interrupción intermitente en el switch troncal Cisco Nexus 9300 ubicado en el Rack C-04 del datacenter central. La alarma de telemetría reporta pérdida de paquetes superior al 38% hacia el clúster de base de datos transaccional. Reinicio preventivo de módulo SFP+ sin éxito. Requiere inspección física de jumpers y reflectometría de canal óptico.",
+    priority: "medium",
+    impact: "department",
+    title: "",
+    description: "",
     notifyEmail: true,
     intelligentRouting: true,
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
-  const [attachments, setAttachments] = useState<AttachmentFile[]>([
-    {
-      id: "1",
-      name: "captura_telemetria_nexus9k_perdida_paquetes.png",
-      size: "2.4 MB",
-      timeAgo: "Subido hace 4 minutos",
-      status: "Verificado",
-      type: "image",
-    },
-    {
-      id: "2",
-      name: "syslog_core_switch_01_0424.log",
-      size: "840 KB",
-      timeAgo: "Verificado sin amenazas",
-      status: "Limpio",
-      type: "log",
-    },
-  ]);
+  const [attachments, setAttachments] = useState<AttachmentFile[]>([]);
 
   const activeUsers = useMemo(() => users.filter((u) => u.active), [users]);
   const selectedRequestor = users.find((u) => u.id === form.requestorId) ?? user;

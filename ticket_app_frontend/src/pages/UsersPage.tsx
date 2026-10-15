@@ -30,6 +30,8 @@ import type { User } from "@/types";
 
 export function UsersPage() {
   const users = useUserStore((state) => state.items);
+  const loading = useUserStore((state) => state.loading);
+  const fetchUsers = useUserStore((state) => state.fetchUsers);
   const sites = useSiteStore((state) => state.items);
   const toggleActive = useUserStore((state) => state.toggleActive);
 
@@ -45,6 +47,31 @@ export function UsersPage() {
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [refreshing, setRefreshing] = useState(false);
   const refreshTimer = useRef<number | null>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const params: any = {};
+      if (searchQuery.trim()) params.search = searchQuery.trim();
+      if (roleTab !== "all" && roleTab !== "inactive") {
+        params.role = roleTab;
+      }
+      if (roleTab === "inactive") {
+        params.activeOnly = false;
+      } else if (statusFilter === "active") {
+        params.activeOnly = true;
+      } else if (statusFilter === "inactive") {
+        params.activeOnly = false;
+      }
+
+      if (siteFilter !== "all") {
+        params.locationId = parseInt(siteFilter, 10);
+      }
+
+      fetchUsers(params);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, roleTab, siteFilter, statusFilter, fetchUsers]);
 
   useEffect(
     () => () => {
@@ -67,66 +94,24 @@ export function UsersPage() {
   const adminsCount = users.filter((u) => u.role === "admin" || u.role === "director").length;
   const inactiveCount = users.filter((u) => !u.active).length;
 
-  // Filtered users
-  const filteredUsers = useMemo(() => {
-    return users.filter((u) => {
-      // Role Tab filter
-      if (roleTab === "technician" && u.role !== "technician") return false;
-      if (roleTab === "requestor" && u.role !== "requestor") return false;
-      if (roleTab === "admin" && u.role !== "admin" && u.role !== "director") return false;
-      if (roleTab === "inactive" && u.active) return false;
-
-      // Site filter
-      if (siteFilter !== "all" && u.siteId !== siteFilter) return false;
-
-      // Status dropdown filter
-      if (statusFilter === "active" && !u.active) return false;
-      if (statusFilter === "inactive" && u.active) return false;
-      if (statusFilter === "busy" && u.presence !== "busy") return false;
-
-      // Search Query
-      if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase().trim();
-        const siteName = sitesById[u.siteId]?.name || "";
-        const match =
-          u.name.toLowerCase().includes(query) ||
-          u.email.toLowerCase().includes(query) ||
-          (u.employeeCode && u.employeeCode.toLowerCase().includes(query)) ||
-          (u.title && u.title.toLowerCase().includes(query)) ||
-          (u.department && u.department.toLowerCase().includes(query)) ||
-          siteName.toLowerCase().includes(query) ||
-          u.phone.toLowerCase().includes(query);
-
-        if (!match) return false;
-      }
-
-      return true;
-    });
-  }, [users, roleTab, siteFilter, statusFilter, searchQuery, sitesById]);
-
   // Pagination slice
-  const pageCount = Math.max(1, Math.ceil(filteredUsers.length / pageSize));
+  const pageCount = Math.max(1, Math.ceil(users.length / pageSize));
   const currentPage = Math.min(page, pageCount);
   const start = (currentPage - 1) * pageSize;
-  const pagedUsers = filteredUsers.slice(start, start + pageSize);
-  const from = filteredUsers.length === 0 ? 0 : start + 1;
-  const to = Math.min(start + pageSize, filteredUsers.length);
+  const pagedUsers = users.slice(start, start + pageSize);
+  const from = users.length === 0 ? 0 : start + 1;
+  const to = Math.min(start + pageSize, users.length);
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setPage(1);
     setRefreshing(true);
-    if (refreshTimer.current !== null) {
-      window.clearTimeout(refreshTimer.current);
-    }
-    refreshTimer.current = window.setTimeout(() => {
-      refreshTimer.current = null;
-      setRefreshing(false);
-      toast.add({
-        title: "Directorio actualizado",
-        description: "Se han recargado los colaboradores y roles en tiempo real.",
-        type: "info",
-      });
-    }, 500);
+    await fetchUsers();
+    setRefreshing(false);
+    toast.add({
+      title: "Directorio actualizado",
+      description: "Se han recargado los colaboradores y roles en tiempo real.",
+      type: "info",
+    });
   };
 
   const handleClearFilters = () => {
@@ -387,7 +372,7 @@ export function UsersPage() {
                 </span>{" "}
                 de{" "}
                 <span className="font-semibold tabular-nums text-foreground">
-                  {filteredUsers.length}
+                  {users.length}
                 </span>
               </span>
 
@@ -396,12 +381,12 @@ export function UsersPage() {
                 variant="outline"
                 size="icon-sm"
                 onClick={handleRefresh}
-                disabled={refreshing}
+                disabled={refreshing || loading}
                 aria-label="Refrescar directorio"
                 title="Refrescar directorio"
               >
                 <RefreshCw
-                  className={cn("size-4", refreshing && "animate-spin")}
+                  className={cn("size-4", (refreshing || loading) && "animate-spin")}
                 />
               </Button>
             </div>
@@ -422,7 +407,26 @@ export function UsersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border text-xs">
-              {pagedUsers.map((user) => {
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="py-12 text-center text-muted-foreground">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <RefreshCw className="size-6 animate-spin text-brand" />
+                      <span className="text-xs font-semibold">Cargando directorio de usuarios...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : pagedUsers.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-12 text-center text-muted-foreground">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <Users className="size-6 text-muted-foreground" />
+                      <span className="text-xs font-semibold">No se encontraron usuarios con los criterios indicados.</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                pagedUsers.map((user) => {
                 const site = sitesById[user.siteId];
                 const initials = user.name
                   .split(" ")
@@ -622,7 +626,7 @@ export function UsersPage() {
                     </td>
                   </tr>
                 );
-              })}
+              }))}
             </tbody>
           </table>
         </div>
@@ -631,7 +635,7 @@ export function UsersPage() {
         <TicketsTableFooter
           from={from}
           to={to}
-          total={filteredUsers.length}
+          total={users.length}
           page={currentPage}
           pageCount={pageCount}
           pageSize={pageSize}

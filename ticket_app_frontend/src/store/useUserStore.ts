@@ -11,7 +11,12 @@ interface UserStore {
   items: User[];
   loading: boolean;
   ready: boolean;
-  fetchUsers: () => Promise<void>;
+  fetchUsers: (params?: {
+    search?: string;
+    role?: string;
+    locationId?: number;
+    activeOnly?: boolean;
+  }) => Promise<void>;
   createUser: (draft: UserDraft) => Promise<User>;
   updateUser: (id: string, draft: Partial<UserDraft & { active?: boolean }>) => Promise<User>;
   toggleActive: (id: string) => Promise<void>;
@@ -22,10 +27,10 @@ export const useUserStore = create<UserStore>((set, get) => ({
   loading: false,
   ready: false,
 
-  fetchUsers: async () => {
+  fetchUsers: async (params) => {
     set({ loading: true });
     try {
-      const users = await listUsers();
+      const users = await listUsers(params);
       set({ items: users, ready: true, loading: false });
     } catch (err) {
       console.error("Error fetching users:", err);

@@ -35,6 +35,7 @@ public class UserDto
 
 public class GetUsersQuery : IRequest<ApiResponse<IReadOnlyList<UserDto>>>
 {
+    public string? Search { get; set; }
     public UserRole? Role { get; set; }
     public int? LocationId { get; set; }
     public bool? ActiveOnly { get; set; }
@@ -57,6 +58,16 @@ public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, ApiResponse<I
             .Include(u => u.Department)
             .Include(u => u.AssignedTickets)
             .AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(request.Search))
+        {
+            var search = request.Search.Trim().ToLower();
+            query = query.Where(u => u.Name.ToLower().Contains(search) ||
+                                     u.Email.ToLower().Contains(search) ||
+                                     u.EmployeeCode.ToLower().Contains(search) ||
+                                     u.Position.ToLower().Contains(search) ||
+                                     u.Phone.ToLower().Contains(search));
+        }
 
         if (request.Role.HasValue)
             query = query.Where(u => u.Role == request.Role.Value);

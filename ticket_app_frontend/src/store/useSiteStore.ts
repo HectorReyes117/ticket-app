@@ -9,7 +9,10 @@ interface SiteStore {
   items: Site[];
   loading: boolean;
   ready: boolean;
-  fetchSites: () => Promise<void>;
+  fetchSites: (params?: {
+    search?: string;
+    activeOnly?: boolean;
+  }) => Promise<void>;
   createSite: (draft: SiteDraft) => Promise<Site>;
 }
 
@@ -18,10 +21,10 @@ export const useSiteStore = create<SiteStore>((set) => ({
   loading: false,
   ready: false,
 
-  fetchSites: async () => {
+  fetchSites: async (params) => {
     set({ loading: true });
     try {
-      const sites = await listSites();
+      const sites = await listSites(params);
       set({ items: sites, ready: true, loading: false });
     } catch (err) {
       console.error("Error fetching locations/sites:", err);

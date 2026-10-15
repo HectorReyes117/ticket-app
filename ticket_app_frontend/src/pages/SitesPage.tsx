@@ -24,6 +24,8 @@ import { cn } from "@/utils";
 
 export function SitesPage() {
   const sites = useSiteStore((state) => state.items);
+  const loading = useSiteStore((state) => state.loading);
+  const fetchSites = useSiteStore((state) => state.fetchSites);
   const users = useUserStore((state) => state.items);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -34,6 +36,18 @@ export function SitesPage() {
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [refreshing, setRefreshing] = useState(false);
   const refreshTimer = useRef<number | null>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const params: any = {};
+      if (searchQuery.trim()) params.search = searchQuery.trim();
+      if (statusFilter === "active") params.activeOnly = true;
+      if (statusFilter === "inactive") params.activeOnly = false;
+      fetchSites(params);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, statusFilter, fetchSites]);
 
   useEffect(
     () => () => {
@@ -49,47 +63,29 @@ export function SitesPage() {
     [users],
   );
 
-  // Filtered sites
-  const filteredSites = useMemo(() => {
-    return sites.filter((site) => {
-      const matchSearch =
-        site.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        site.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        site.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        site.id.toLowerCase().includes(searchQuery.toLowerCase());
-
-      const matchStatus =
-        statusFilter === "all" ||
-        (statusFilter === "active" && site.active) ||
-        (statusFilter === "inactive" && !site.active);
-
-      return matchSearch && matchStatus;
-    });
-  }, [sites, searchQuery, statusFilter]);
+  const totalAreas = useMemo(
+    () => sites.reduce((acc, s) => acc + (s.areas?.length || 0), 0),
+    [sites],
+  );
 
   // Pagination calculations
-  const pageCount = Math.max(1, Math.ceil(filteredSites.length / pageSize));
+  const pageCount = Math.max(1, Math.ceil(sites.length / pageSize));
   const currentPage = Math.min(page, pageCount);
   const start = (currentPage - 1) * pageSize;
-  const pagedSites = filteredSites.slice(start, start + pageSize);
-  const from = filteredSites.length === 0 ? 0 : start + 1;
-  const to = Math.min(start + pageSize, filteredSites.length);
+  const pagedSites = sites.slice(start, start + pageSize);
+  const from = sites.length === 0 ? 0 : start + 1;
+  const to = Math.min(start + pageSize, sites.length);
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setPage(1);
     setRefreshing(true);
-    if (refreshTimer.current !== null) {
-      window.clearTimeout(refreshTimer.current);
-    }
-    refreshTimer.current = window.setTimeout(() => {
-      refreshTimer.current = null;
-      setRefreshing(false);
-      toast.add({
-        title: "Sedes actualizadas",
-        description: "Se han recargado las sedes y ubicaciones registradas.",
-        type: "info",
-      });
-    }, 500);
+    await fetchSites();
+    setRefreshing(false);
+    toast.add({
+      title: "Sedes actualizadas",
+      description: "Se han recargado las sedes y ubicaciones registradas.",
+      type: "info",
+    });
   };
 
   const handlePageSizeChange = (nextPageSize: number) => {
@@ -112,11 +108,6 @@ export function SitesPage() {
     setCategoryFilter(val);
     setPage(1);
   };
-
-  // Total areas / spaces
-  const totalAreas = useMemo(() => {
-    return sites.reduce((acc, site) => acc + (site.areas?.length || 0), 0);
-  }, [sites]);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto w-full">
@@ -301,7 +292,7 @@ export function SitesPage() {
                 </span>{" "}
                 de{" "}
                 <span className="font-semibold tabular-nums text-foreground">
-                  {filteredSites.length}
+                  {sites.length}
                 </span>
               </span>
 
@@ -310,12 +301,12 @@ export function SitesPage() {
                 variant="outline"
                 size="icon-sm"
                 onClick={handleRefresh}
-                disabled={refreshing}
+                disabled={refreshing || loading}
                 aria-label="Refrescar sedes"
                 title="Refrescar sedes"
               >
                 <RefreshCw
-                  className={cn("size-4", refreshing && "animate-spin")}
+                  className={cn("size-4", (refreshing || loading) && "animate-spin")}
                 />
               </Button>
             </div>
@@ -337,7 +328,26 @@ export function SitesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border text-xs">
-              {pagedSites.map((site, index) => {
+              {loading ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-muted-foreground">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <RefreshCw className="size-6 animate-spin text-brand" />
+                      <span className="text-xs font-semibold">Cargando inventario de sedes...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : pagedSites.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-muted-foreground">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <Building2 className="size-6 text-muted-foreground" />
+                      <span className="text-xs font-semibold">No se encontraron sedes registradas.</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                pagedSites.map((site, index) => {
                 const manager = site.managers && site.managers.length > 0
                   ? managersById[site.managers[0]]
                   : users[0];
@@ -463,7 +473,7 @@ export function SitesPage() {
                     </td>
                   </tr>
                 );
-              })}
+              }))}
             </tbody>
           </table>
         </div>
@@ -472,7 +482,7 @@ export function SitesPage() {
         <TicketsTableFooter
           from={from}
           to={to}
-          total={filteredSites.length}
+          total={sites.length}
           page={currentPage}
           pageCount={pageCount}
           pageSize={pageSize}

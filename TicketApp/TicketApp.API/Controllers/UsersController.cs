@@ -11,10 +11,11 @@ namespace TicketApp.API.Controllers;
 public class UsersController : BaseApiController
 {
     [HttpGet]
-    public async Task<ActionResult<ApiResponse<IReadOnlyList<UserDto>>>> GetUsers([FromQuery] UserRole? role, [FromQuery] int? locationId, [FromQuery] bool? activeOnly)
+    public async Task<ActionResult<ApiResponse<IReadOnlyList<UserDto>>>> GetUsers([FromQuery] string? search, [FromQuery] UserRole? role, [FromQuery] int? locationId, [FromQuery] bool? activeOnly)
     {
         var result = await Mediator.Send(new GetUsersQuery
         {
+            Search = search,
             Role = role,
             LocationId = locationId,
             ActiveOnly = activeOnly

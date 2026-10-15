@@ -36,6 +36,8 @@ public class LocationDto
 
 public class GetLocationsQuery : IRequest<ApiResponse<IReadOnlyList<LocationDto>>>
 {
+    public string? Search { get; set; }
+    public bool? ActiveOnly { get; set; }
 }
 
 public class GetLocationsQueryHandler : IRequestHandler<GetLocationsQuery, ApiResponse<IReadOnlyList<LocationDto>>>
@@ -49,12 +51,28 @@ public class GetLocationsQueryHandler : IRequestHandler<GetLocationsQuery, ApiRe
 
     public async Task<ApiResponse<IReadOnlyList<LocationDto>>> Handle(GetLocationsQuery request, CancellationToken cancellationToken)
     {
-        var locations = await _unitOfWork.Repository<Location>()
+        var query = _unitOfWork.Repository<Location>()
             .Query()
             .Include(l => l.Custodian)
             .Include(l => l.Areas)
             .Include(l => l.Tickets)
-            .AsNoTracking()
+            .AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(request.Search))
+        {
+            var search = request.Search.Trim().ToLower();
+            query = query.Where(l => l.Name.ToLower().Contains(search) ||
+                                     l.City.ToLower().Contains(search) ||
+                                     l.Address.ToLower().Contains(search) ||
+                                     l.Code.ToLower().Contains(search));
+        }
+
+        if (request.ActiveOnly.HasValue && request.ActiveOnly.Value)
+        {
+            query = query.Where(l => l.IsActive);
+        }
+
+        var locations = await query
             .OrderBy(l => l.Name)
             .Select(l => new LocationDto
             {
