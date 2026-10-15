@@ -129,9 +129,12 @@ export function matchesQuery(
     const assignee = ticket.assigneeId
       ? (usersById[ticket.assigneeId]?.name.toLowerCase() ?? "")
       : "";
-    const haystack =
+    // `(...)` is required: without it `.toLowerCase()` binds to the second literal
+    // only, leaving id/title/category/subcategory case-sensitive.
+    const haystack = (
       `${ticket.id} ${ticket.title} ${ticket.category} ${ticket.subcategory} ` +
-      `${ticket.area} ${requestor} ${assignee}`.toLowerCase();
+      `${ticket.area} ${requestor} ${assignee}`
+    ).toLowerCase();
     if (!haystack.includes(search)) return false;
   }
 
