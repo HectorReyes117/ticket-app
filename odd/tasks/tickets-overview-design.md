@@ -9,6 +9,9 @@ chart — while keeping today's status pills and the existing kanban/table toggl
 - Delivery strategy: `feature-branch-chain` — decided by the user as "Una rama, 4 commits". All work
   lands on `feat/tickets-overview-design`, one work-unit commit per task, in task order; the merge to
   `main` stays a human decision. Authored-changed-lines forecast: ~850 (exceeds ~400).
+  The branch now holds the 4 feature commits plus 3 follow-up fix commits (T5–T7, see L9–L11): T5 from
+  the independent verification blocker, T6–T7 from defects the user reported directly. Nothing is
+  pushed and no pull request exists.
 - Test runner: **none configured** (no `test` script, no Vitest). Applicable checks are
   `npm run build` (`tsc -b && vite build`) and `npm run lint`. `npm run lint` exits 1 on 19
   **pre-existing** errors in `src/components/ui/*` and `src/hooks/use-mobile.ts`.
@@ -126,6 +129,9 @@ The generic improvements (counters, rows-per-page, pagination, extra selects, so
 | T2 | Table chrome + pagination: card header `Registro de Tickets`/`Mostrando X de Y`, refresh, results row, rows-per-page, page controls | S6, S7, S8, S9, S12 | inline | done | `ticketQuery` probe 57/57 pass (incl. a paging mirror); `npm run build` ok; eslint clean on `src/features/tickets` |
 | T3 | Page chrome: KPI cards, date-range filter, `+ Nueva Solicitud` button | S1, S2, S3 | inline | done | `ticketQuery` probe 84/84 pass; `npm run build` ok; eslint clean on touched files |
 | T4 | Distribution chart card below the table | S10 | inline | done | `ticketQuery` probe 108/108 pass; `npm run build` ok; eslint clean on touched files (incl. `DashboardPage`) |
+| T5 | Fix the search regression found by verification (B1) | S4 | inline | done | `740431b`; search probe ALL PASS (oracle parity + casing invariance); full probe 107/107 pass; `npm run build` ok |
+| T6 | Show option labels instead of raw values in select triggers | S4, S10, S11 | inline | done | `d671885`; render probe proves `items` → `Alta` vs `high`; all 14 selects updated; `npm run build` ok; eslint clean |
+| T7 | Require confirming the date range and highlight the selected days | S2 | inline | done | `2e6dec8`; render probe: range = 1 start / 9 middle / 1 end with `bg-brand-soft`; `npm run build` ok; eslint clean (incl. `calendar.tsx`) |
 
 ## Log
 
@@ -250,3 +256,66 @@ Checks: `npm run build` ok; `eslint` clean on `src/features/tickets`,
 `src/components/common/DateRangeFilter`, `src/features/dashboard/components/TicketsByStatusChart.tsx`,
 `src/pages/TicketsPage.tsx` and `src/pages/DashboardPage.tsx` (the last to prove the shared chart
 still lints after the prop addition).
+
+L9 — Independent verification (`gentle-ai-verify`, read-only, over `fc3474b..9007695`) returned
+**blocked** with exactly one blocker.
+- Commands: `npm run build` exit 0; targeted `eslint` on the feature paths exit 0 (incl.
+  `DashboardPage`, proving the shared-chart prop change lints); SSR probes run from a fresh scratch
+  copy — query probe 115 checks with 3 failures, render probe 52/52; `git status --porcelain` empty.
+- Verdicts: S1, S2, S3, S5, S6, S7, S8, S9, S10, S11, S12 **satisfied**; S4 **partial** because of B1.
+- **B1 (blocker, change-caused regression):** `matchesQuery` built its haystack by `+`-joining two
+  template literals, so `.toLowerCase()` bound to the second literal only. `id`, `title`, `category`
+  and `subcategory` stayed case-sensitive while the query term was lowercased, so searching `fallo`,
+  `proyector` or `redes` returned **no rows** — while the toolbar placeholder promises
+  "Filtrar por asunto, solicitante o ID…". The previous inline search at `fc3474b` used a single
+  template literal and was fully lowercased, which is what classifies this as a regression rather
+  than a pre-existing gap.
+- Advisories (each reproduced at the **baseline** commit, therefore not blockers): **A1** Base UI
+  select triggers display the raw value; **A2** `currentPage = Math.min(page, pageCount)` clamps only
+  upward, so `page < 1` would yield 0 — unreachable because prev is disabled at page 1; **A3** KPI
+  cards and mock timestamps derive from `Date.now()` at module import, so they drift with real time.
+- Not verified: interactive browser paths (clicking pagination/refresh/date-pick/toggle and the
+  Base UI Select/Calendar/Popover interplay after hydration) — there is no test runner and no browser
+  harness in this project; covered instead by source reading, SSR static render and pure-logic probes.
+
+L10 — T5 delivered: B1 fixed (`740431b`). The whole concatenation is now parenthesised before
+`.toLowerCase()`, with a comment naming the precedence trap. Verified with a dedicated probe whose
+oracle lowercases the entire haystack independently: `fallo`, `proyector`, `redes`, `impresora` and
+`toner` all now return rows, and each query returns the identical set for lowercase, uppercase and
+mixed casing. The full pre-existing probe still passes 107/107 with exit 0, so nothing else regressed.
+Note: the first run of this new probe reported 2 spurious failures because the oracle returned
+declaration order while `applyTicketQuery` also sorts — the probe compares order-insensitive sets now.
+
+L11 — T6 and T7 delivered in response to defects the user reported by hand.
+- **T6 (`d671885`) — selects showed values, not labels.** Base UI's `Select.Value` falls back to the
+  raw value unless `Select.Root` receives `items`; only then does it resolve the selected item's label
+  (verified against `SelectRoot.d.ts` and proven empirically: the same markup renders `high` without
+  `items` and `Alta` with it). The verifier's advisory A1 had read this as an SSR-only artifact;
+  the differential probe disproves that — the output changes with the `items` prop alone.
+  This is **pre-existing and app-wide**, not introduced by this feature: the baseline toolbar showed
+  `all` for Prioridad/Sede too. All 14 selects that render a meaningful label were fixed —
+  `TicketsToolbar` (Área, Prioridad, Técnico, Sede, Ordenar por), `TicketsDistributionChart` (periodo),
+  `TicketStatusSelect` (estado), `TicketForm` (solicitante, sede, área, categoría, tipo) and
+  `UserFormSheet` (rol, sede) — using Base UI's documented `{ value, label }` list form. The
+  rows-per-page select was deliberately left alone: its value (`"10"`) already *is* its label.
+- **T7 (`2e6dec8`) — the range picker closed after a single click and never showed the days in
+  between.** Two causes: (a) the caller committed on every click and dismissed the popover as soon as
+  both bounds existed, so the completed range was never visible; (b) Base UI's `Popover` also treats
+  `focus-out` as a dismissal (`PopoverRoot.d.ts` lists `REASONS.focusOut`), and the inline calendar
+  moves focus between day cells while a range is being picked. The calendar now edits a **draft** that
+  only reaches the table through an explicit `Aplicar`, `Limpiar` clears the draft without closing,
+  the optional `autoFocus` was dropped, and a `focus-out` dismissal is ignored while a genuine outside
+  press or Escape still closes. The in-between days previously used `bg-muted` (`#f8fafc`), which is
+  invisible against the popover's white (`#ffffff`) background; they now use the `brand-soft` tint, and
+  `Calendar` has exactly one consumer (`DateRangeFilter`), so no other screen is affected.
+  SSR evidence: a 2026-06-10 → 2026-06-20 range renders **1 start day, 9 middle days, 1 end day**, each
+  middle day carrying `data-[range-middle=true]:bg-brand-soft` and announced by react-day-picker as
+  `aria-label="…, selected"`.
+- Checks for both: `npm run build` exit 0; `eslint` exit 0 on every changed path including
+  `calendar.tsx`; regression probes ALL PASS (search, full query suite 107/107, SSR render).
+- **Test-runner exception (both tasks):** this project still has no test runner, so no runnable RED
+  could be observed for these fixes; the proportionate functional checks above were run instead. The
+  probe sources live outside the repository (`%TEMP%\opencode\ticket-probe\`) and are intentionally not
+  committed. Ready-to-commit Vitest specs for the whole feature were produced by the verifier and are
+  available on request; wiring up Vitest is a separate tooling decision left to the user.
+- Known remaining instance of the same pattern: none — every `Select` in the app was covered.
