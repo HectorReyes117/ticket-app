@@ -12,6 +12,7 @@ import { PageHeader } from "@/components/common/PageHeader";
 import { DateRangeFilter } from "@/components/common/DateRangeFilter/DateRangeFilter";
 import { KpiSection, type KpiItem } from "@/features/dashboard/components/KpiSection";
 import { TicketsBrowser } from "@/features/tickets/components/TicketsBrowser";
+import { TicketsDistributionChart } from "@/features/tickets/components/TicketsDistributionChart";
 import { summarizeTickets } from "@/features/tickets/services/ticketQuery";
 import { useTicketStore } from "@/store";
 import type { DateRange } from "react-day-picker";
@@ -85,6 +86,8 @@ export function TicketsPage() {
         showQuickFilters
         createdRange={range}
       />
+
+      <TicketsDistributionChart tickets={tickets} />
     </div>
   );
 }

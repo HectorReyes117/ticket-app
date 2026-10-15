@@ -125,7 +125,7 @@ The generic improvements (counters, rows-per-page, pagination, extra selects, so
 | T1 | Enrich the filter toolbar: pills with counts + quick filters, Área/Técnico selects, Limpiar filtros, Ordenar por | S4, S5, S11, S12 | inline | done | `ticketQuery` probe 34/34 pass; `npm run build` ok; eslint clean on touched files |
 | T2 | Table chrome + pagination: card header `Registro de Tickets`/`Mostrando X de Y`, refresh, results row, rows-per-page, page controls | S6, S7, S8, S9, S12 | inline | done | `ticketQuery` probe 57/57 pass (incl. a paging mirror); `npm run build` ok; eslint clean on `src/features/tickets` |
 | T3 | Page chrome: KPI cards, date-range filter, `+ Nueva Solicitud` button | S1, S2, S3 | inline | done | `ticketQuery` probe 84/84 pass; `npm run build` ok; eslint clean on touched files |
-| T4 | Distribution chart card below the table | S10 | inline | pending | — |
+| T4 | Distribution chart card below the table | S10 | inline | done | `ticketQuery` probe 108/108 pass; `npm run build` ok; eslint clean on touched files (incl. `DashboardPage`) |
 
 ## Log
 
@@ -219,3 +219,34 @@ button in the header.
   `resolved 2`) and for the empty input.
 Checks: `npm run build` ok; `eslint` clean on `src/features/tickets`,
 `src/components/common/DateRangeFilter` and `src/pages/TicketsPage.tsx`.
+
+L8 — T4 delivered. New `TicketsDistributionChart.tsx` renders the design's
+`Distribución de Solicitudes` card below the table: a period select, a `Resumen global` legend
+heading, the donut and a real SLA footer.
+- Reuse over duplication: the donut + per-status legend comes from the existing
+  `TicketsByStatusChart` (dashboard), which gained one **optional** `centerLabel` prop (default
+  `"solicitudes"`), so the dashboard's rendering is byte-identical and the card can show the
+  design's `Tickets totales` caption instead. Adding an optional prop is not a breaking contract
+  change.
+- New pure helpers in `ticketQuery.ts`, all probe-covered: `filterByPeriod` (`month` / `week` /
+  `all`, from `createdAt`), `countByStatus` (keeps zero rows so the legend never shifts) and
+  `summarizeSla` (returns `percentage: null` rather than a fake `0%`/`100%` when nothing is
+  resolved).
+- **Honest approximation, flagged in code:** `Ticket` has no `resolvedAt`, so `summarizeSla` uses
+  `updatedAt` as the resolution stamp. Documented in a doc comment on the helper.
+- **Deviations from the design, both deliberate and reversible:** (a) the donut groups by ticket
+  **status** (via the app's existing chart) rather than the design's mixed
+  `Abiertos / En Proceso / Críticos / Resueltos` grouping, which mixes statuses with priorities and
+  has no equivalent in this data model; (b) the design's `Ver detalles` link was **not** implemented
+  because the user did not request it and the card is already on the tickets page (same call as
+  `Exportar`, L4.3). The footer stat is real, not the placeholder `98.4%`.
+- Note on observability: the seed spans ~3 days, so `Este mes`, `Últimos 7 días` and
+  `Todo el tiempo` currently return the same 14 tickets. The select is wired to real date logic
+  rather than being decorative; it becomes visibly different as data ages. The probe pins a clock to
+  prove the ranges genuinely narrow (a far-future clock yields 0 for `month`).
+- Probe grew to 108/108 checks, adding period filtering, the status breakdown and SLA compliance
+  (including the `null` cases: no resolved tickets, and an open-only slice).
+Checks: `npm run build` ok; `eslint` clean on `src/features/tickets`,
+`src/components/common/DateRangeFilter`, `src/features/dashboard/components/TicketsByStatusChart.tsx`,
+`src/pages/TicketsPage.tsx` and `src/pages/DashboardPage.tsx` (the last to prove the shared chart
+still lints after the prop addition).

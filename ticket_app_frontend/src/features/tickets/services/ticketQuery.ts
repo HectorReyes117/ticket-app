@@ -250,3 +250,75 @@ export function summarizeTickets(
 
   return { total: tickets.length, open, createdLast24h, inProgress, resolved };
 }
+
+export const DISTRIBUTION_PERIODS = ["month", "week", "all"] as const;
+
+export type DistributionPeriod = (typeof DISTRIBUTION_PERIODS)[number];
+
+export const DISTRIBUTION_PERIOD_LABELS: Record<DistributionPeriod, string> = {
+  month: "Este mes",
+  week: "Últimos 7 días",
+  all: "Todo el tiempo",
+};
+
+/** Narrows tickets to the distribution chart's period, measured from `createdAt`. */
+export function filterByPeriod(
+  tickets: Ticket[],
+  period: DistributionPeriod,
+  now: Date = new Date(),
+): Ticket[] {
+  if (period === "all") return tickets;
+
+  const from = new Date(now);
+  if (period === "week") {
+    from.setDate(from.getDate() - 7);
+  } else {
+    from.setDate(1);
+  }
+  from.setHours(0, 0, 0, 0);
+
+  const cutoff = from.getTime();
+  return tickets.filter(
+    (ticket) => new Date(ticket.createdAt).getTime() >= cutoff,
+  );
+}
+
+/** Status breakdown for the distribution donut, keeping empty statuses so the legend is stable. */
+export function countByStatus(
+  tickets: Ticket[],
+): Array<{ status: TicketStatus; count: number }> {
+  return TICKET_STATUSES.map((status) => ({
+    status,
+    count: tickets.filter((ticket) => ticket.status === status).length,
+  }));
+}
+
+export interface TicketSlaSummary {
+  /** Resolved tickets in scope, i.e. the compliance base. */
+  resolved: number;
+  /** Of those, how many finished at or before their due date. */
+  compliant: number;
+  /** `null` when nothing was resolved, so the UI never shows a fake 0% or 100%. */
+  percentage: number | null;
+}
+
+/**
+ * SLA compliance for the distribution card footer. `Ticket` has no `resolvedAt`, so `updatedAt`
+ * is used as the resolution stamp — the best available approximation for a resolved ticket.
+ */
+export function summarizeSla(tickets: Ticket[]): TicketSlaSummary {
+  const resolved = tickets.filter((ticket) => ticket.status === "resolved");
+  const compliant = resolved.filter(
+    (ticket) =>
+      new Date(ticket.updatedAt).getTime() <= new Date(ticket.slaDueAt).getTime(),
+  );
+
+  return {
+    resolved: resolved.length,
+    compliant: compliant.length,
+    percentage:
+      resolved.length === 0
+        ? null
+        : Math.round((compliant.length / resolved.length) * 100),
+  };
+}

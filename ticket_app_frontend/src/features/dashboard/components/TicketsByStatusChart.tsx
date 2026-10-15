@@ -18,9 +18,14 @@ const STATUS_HEX: Record<TicketStatus, string> = {
 
 interface TicketsByStatusChartProps {
   data: Array<{ status: TicketStatus; count: number }>;
+  /** Caption under the centre total. Defaults to the dashboard's existing wording. */
+  centerLabel?: string;
 }
 
-export function TicketsByStatusChart({ data }: TicketsByStatusChartProps) {
+export function TicketsByStatusChart({
+  data,
+  centerLabel = "solicitudes",
+}: TicketsByStatusChartProps) {
   const chartData = data.filter((item) => item.count > 0);
   const total = chartData.reduce((sum, item) => sum + item.count, 0);
 
@@ -62,7 +67,7 @@ export function TicketsByStatusChart({ data }: TicketsByStatusChartProps) {
           <span className="text-3xl font-semibold tabular-nums text-foreground">
             {total}
           </span>
-          <span className="text-xs text-muted-foreground">solicitudes</span>
+          <span className="text-xs text-muted-foreground">{centerLabel}</span>
         </div>
       </div>
 
