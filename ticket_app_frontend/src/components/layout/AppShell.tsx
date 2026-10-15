@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Sidebar } from "./Sidebar";
+import { TopHeader } from "./TopHeader";
 
 interface AppShellProps {
   children: ReactNode;
@@ -31,6 +32,7 @@ export function AppShell({ children }: AppShellProps) {
     <div className="flex min-h-screen bg-background">
       <Sidebar collapsed={collapsed} onToggle={toggleSidebar} />
       <div className="flex min-w-0 flex-1 flex-col">
+        <TopHeader />
         <main className="mx-auto w-full max-w-[1400px] flex-1 space-y-6 p-6">
           {children}
         </main>

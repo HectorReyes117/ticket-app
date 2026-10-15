@@ -46,7 +46,7 @@ export function LoginPage() {
           <span className="flex size-10 items-center justify-center rounded-xl bg-white/15">
             <TicketIcon className="size-5" />
           </span>
-          <span className="text-lg font-semibold">FlowService</span>
+          <span className="text-lg font-semibold">TicketApp</span>
         </div>
 
         <div className="relative max-w-md">

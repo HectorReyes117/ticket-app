@@ -1,5 +1,5 @@
 export const APP_CONFIG = {
-  name: "FlowService",
+  name: "TicketApp",
   systemName: "Sistema de Solicitudes de Servicios",
   version: "1.0.0",
   defaultPageSize: 10,

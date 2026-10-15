@@ -29,7 +29,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         {!collapsed ? (
           <span className="min-w-0 leading-tight">
             <span className="block truncate text-sm font-semibold text-foreground">
-              FlowService
+              TicketApp
             </span>
             <span className="block truncate text-[11px] text-muted-foreground">
               Solicitudes de Servicios
