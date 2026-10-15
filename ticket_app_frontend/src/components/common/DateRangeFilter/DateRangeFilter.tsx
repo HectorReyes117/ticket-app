@@ -22,6 +22,9 @@ export function DateRangeFilter({
   className,
 }: DateRangeFilterProps) {
   const [open, setOpen] = useState(false);
+  // The calendar edits a draft: nothing reaches the page until "Aplicar",
+  // so a half-finished range never filters the table.
+  const [draft, setDraft] = useState<DateRange | undefined>(value);
 
   const hasRange = Boolean(value?.from);
   const label =
@@ -31,9 +34,26 @@ export function DateRangeFilter({
         ? `Desde ${formatDate(value.from)}`
         : "Rango de fechas";
 
+  const hint =
+    draft?.from && !draft.to
+      ? "Ahora elige el día final."
+      : draft?.from && draft.to
+        ? "Confirma con Aplicar."
+        : "Elige el día inicial y el final.";
+
   return (
     <div className={cn("flex items-center gap-1", className)}>
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover
+        open={open}
+        onOpenChange={(next, details) => {
+          // Base UI reports a focus shift as "focus-out" and dismisses the popover.
+          // The inline calendar moves focus between day cells while a range is being
+          // picked, so that reason must not close it. Outside press and Escape still do.
+          if (!next && details.reason === "focus-out") return;
+          setOpen(next);
+          if (next) setDraft(value);
+        }}
+      >
         <PopoverTrigger
           render={
             <Button
@@ -54,30 +74,33 @@ export function DateRangeFilter({
           <Calendar
             mode="range"
             numberOfMonths={2}
-            autoFocus
-            selected={value}
-            onSelect={(range) => {
-              onChange(range);
-              if (range?.from && range.to) setOpen(false);
-            }}
-            defaultMonth={value?.from}
+            selected={draft}
+            onSelect={setDraft}
+            defaultMonth={draft?.from}
           />
           <div className="flex items-center justify-between gap-2 border-t border-border p-2">
-            <span className="px-1 text-xs text-muted-foreground">
-              Selecciona el día inicial y el final.
-            </span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                onChange(undefined);
-                setOpen(false);
-              }}
-              disabled={!hasRange}
-            >
-              Limpiar
-            </Button>
+            <span className="px-1 text-xs text-muted-foreground">{hint}</span>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setDraft(undefined)}
+                disabled={!draft?.from}
+              >
+                Limpiar
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => {
+                  onChange(draft);
+                  setOpen(false);
+                }}
+              >
+                Aplicar
+              </Button>
+            </div>
           </div>
         </PopoverContent>
       </Popover>
