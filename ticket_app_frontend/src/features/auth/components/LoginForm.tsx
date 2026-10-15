@@ -1,6 +1,14 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Info, Loader, LogIn, Ticket as TicketIcon } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  Info,
+  Loader,
+  LogIn,
+  ShieldCheck,
+  Ticket as TicketIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -59,6 +67,18 @@ export function LoginForm() {
           <p className="mt-1 text-sm text-muted-foreground">
             Inicia sesión en el Sistema de Solicitudes de Servicios
           </p>
+
+          <div
+            role="note"
+            className="mt-4 flex items-start gap-2.5 rounded-lg border border-brand/30 bg-brand-soft px-3 py-2.5 text-left text-xs leading-relaxed text-brand-soft-fg"
+          >
+            <ShieldCheck className="mt-0.5 size-4 shrink-0" />
+            <p>
+              Acceso regulado por políticas internas de TI: las cuentas son creadas y
+              administradas exclusivamente por el Administrador del Sistema. Toda
+              actividad es monitoreada.
+            </p>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5" noValidate>
