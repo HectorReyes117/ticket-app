@@ -18,6 +18,11 @@ export function createUserFromDraft(draft: UserDraft): User {
     color: "#2563eb",
     openTickets: 0,
     lastActiveAt: new Date().toISOString(),
+    department: draft.department?.trim() || "TI & Infraestructura",
+    title: draft.title?.trim() || "Especialista de Soporte",
+    extension: draft.extension?.trim() || "Ext. 4010",
+    employeeCode: draft.employeeCode?.trim() || `#EMP-${Math.floor(1000 + Math.random() * 9000)}`,
+    queues: draft.queues || ["Soporte General"],
   };
 }
 

@@ -14,6 +14,11 @@ export interface User {
   color: string;
   openTickets: number;
   lastActiveAt: string;
+  department?: string;
+  title?: string;
+  extension?: string;
+  employeeCode?: string;
+  queues?: string[];
 }
 
 export interface UserDraft {
@@ -22,4 +27,9 @@ export interface UserDraft {
   phone: string;
   role: Role;
   siteId: string;
+  department?: string;
+  title?: string;
+  extension?: string;
+  employeeCode?: string;
+  queues?: string[];
 }
