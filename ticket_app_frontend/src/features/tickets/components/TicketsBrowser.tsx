@@ -1,39 +1,44 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { FilePlus2, Inbox } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { SearchInput } from "@/components/common/SearchInput";
-import { FilterPills } from "@/components/common/FilterPills";
-import { ViewToggle } from "@/components/common/ViewToggle";
 import { EmptyState } from "@/components/common/EmptyState";
 import { TicketTable } from "./TicketTable";
 import { TicketKanban } from "./TicketKanban";
+import { TicketsToolbar } from "./TicketsToolbar";
 import { useSiteStore, useTicketStore, useUserStore } from "@/store";
 import { useAuth } from "@/context/auth-context";
-import { STATUS_META, TICKET_STATUSES } from "@/utils";
-import type { Priority, Ticket, TicketStatus, TicketView } from "@/types";
+import {
+  DEFAULT_TICKET_QUERY,
+  applyTicketQuery,
+  buildPillOptions,
+  hasActiveFilters,
+  isQuickFilter,
+  type TicketQueryState,
+} from "../services/ticketQuery";
+import type { Ticket, TicketStatus, TicketView } from "@/types";
 
 interface TicketsBrowserProps {
   tickets: Ticket[];
+  /**
+   * Design quick filters (Sin asignar / Urgentes / Cerradas). Off by default because
+   * `Sin asignar` is meaningless on a page that only lists your own assignments.
+   */
+  showQuickFilters?: boolean;
 }
 
-export function TicketsBrowser({ tickets }: TicketsBrowserProps) {
+export function TicketsBrowser({
+  tickets,
+  showQuickFilters = false,
+}: TicketsBrowserProps) {
   const { user } = useAuth();
   const users = useUserStore((state) => state.items);
   const sites = useSiteStore((state) => state.items);
   const updateStatus = useTicketStore((state) => state.updateStatus);
+  const navigate = useNavigate();
 
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<TicketStatus | "all">("all");
-  const [priority, setPriority] = useState<Priority | "all">("all");
-  const [siteId, setSiteId] = useState<string>("all");
+  const [filters, setFilters] = useState<TicketQueryState>(DEFAULT_TICKET_QUERY);
   const [view, setView] = useState<TicketView>("table");
 
   const usersById = useMemo(
@@ -44,24 +49,42 @@ export function TicketsBrowser({ tickets }: TicketsBrowserProps) {
     () => Object.fromEntries(sites.map((s) => [s.id, s])),
     [sites],
   );
+  const context = useMemo(() => ({ usersById }), [usersById]);
 
-  const normalized = useMemo(() => search.trim().toLowerCase(), [search]);
+  const filtered = useMemo(
+    () => applyTicketQuery(tickets, filters, context),
+    [tickets, filters, context],
+  );
 
-  const filtered = useMemo(() => {
-    return [...tickets]
-      .filter((ticket) => {
-        if (status !== "all" && ticket.status !== status) return false;
-        if (priority !== "all" && ticket.priority !== priority) return false;
-        if (siteId !== "all" && ticket.siteId !== siteId) return false;
-        if (normalized) {
-          const requestor = usersById[ticket.requestorId]?.name.toLowerCase() ?? "";
-          const haystack = `${ticket.id} ${ticket.title} ${ticket.category} ${requestor}`.toLowerCase();
-          if (!haystack.includes(normalized)) return false;
-        }
-        return true;
-      })
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  }, [tickets, status, priority, siteId, normalized, usersById]);
+  const pillOptions = useMemo(() => {
+    const options = buildPillOptions(tickets, filters, context);
+    if (showQuickFilters) return options;
+    return options.filter((option) => !isQuickFilter(option.value));
+  }, [tickets, filters, context, showQuickFilters]);
+
+  const areaOptions = useMemo(
+    () =>
+      [...new Set(tickets.map((ticket) => ticket.area))]
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, "es")),
+    [tickets],
+  );
+
+  const technicians = useMemo(
+    () =>
+      users
+        .filter((item) => item.role === "technician")
+        .sort((a, b) => a.name.localeCompare(b.name, "es")),
+    [users],
+  );
+
+  const filtersActive = hasActiveFilters(filters);
+
+  const handleChange = (patch: Partial<TicketQueryState>) =>
+    setFilters((current) => ({ ...current, ...patch }));
+
+  const handleClear = () =>
+    setFilters((current) => ({ ...DEFAULT_TICKET_QUERY, sort: current.sort }));
 
   const handleMove = (ticketId: string, nextStatus: TicketStatus) => {
     updateStatus(ticketId, nextStatus, user?.id ?? "system");
@@ -69,57 +92,17 @@ export function TicketsBrowser({ tickets }: TicketsBrowserProps) {
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardContent className="flex flex-col gap-3 p-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-1 flex-wrap items-center gap-2">
-            <SearchInput
-              value={search}
-              onChange={setSearch}
-              placeholder="Buscar por ID, título o solicitante…"
-              className="w-full sm:w-72"
-              label="Buscar solicitudes"
-            />
-            <Select value={priority} onValueChange={(value) => setPriority((value ?? "all") as Priority | "all")}>
-              <SelectTrigger className="w-36" aria-label="Filtrar por prioridad">
-                <SelectValue placeholder="Prioridad" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas las prioridades</SelectItem>
-                <SelectItem value="low">Baja</SelectItem>
-                <SelectItem value="medium">Media</SelectItem>
-                <SelectItem value="high">Alta</SelectItem>
-                <SelectItem value="critical">Crítica</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={siteId} onValueChange={(value) => setSiteId(value ?? "all")}>
-              <SelectTrigger className="w-44" aria-label="Filtrar por sede">
-                <SelectValue placeholder="Sede" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas las sedes</SelectItem>
-                {sites.map((site) => (
-                  <SelectItem key={site.id} value={site.id}>
-                    {site.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <ViewToggle value={view} onValueChange={setView} />
-        </CardContent>
-      </Card>
-
-      <FilterPills
-        ariaLabel="Filtrar por estado"
-        options={[
-          { value: "all", label: "Todas" },
-          ...TICKET_STATUSES.map((value) => ({
-            value,
-            label: STATUS_META[value].label,
-          })),
-        ]}
-        value={status}
-        onValueChange={(value) => setStatus(value as TicketStatus | "all")}
+      <TicketsToolbar
+        filters={filters}
+        onChange={handleChange}
+        onClear={handleClear}
+        filtersActive={filtersActive}
+        pillOptions={pillOptions}
+        areaOptions={areaOptions}
+        technicians={technicians}
+        sites={sites}
+        view={view}
+        onViewChange={setView}
       />
 
       {filtered.length === 0 ? (
@@ -129,12 +112,16 @@ export function TicketsBrowser({ tickets }: TicketsBrowserProps) {
               icon={<Inbox className="size-6" />}
               title="No se encontraron solicitudes"
               description={
-                normalized || status !== "all" || priority !== "all"
+                filtersActive
                   ? "Ajusta los filtros o el término de búsqueda."
                   : "Aún no hay solicitudes registradas."
               }
               action={
-                <Button variant="outline" className="gap-1.5">
+                <Button
+                  variant="outline"
+                  className="gap-1.5"
+                  onClick={() => navigate("/tickets/new")}
+                >
                   <FilePlus2 className="size-4" />
                   Crear solicitud
                 </Button>
