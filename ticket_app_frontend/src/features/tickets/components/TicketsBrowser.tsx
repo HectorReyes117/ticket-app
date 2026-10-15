@@ -172,8 +172,8 @@ export function TicketsBrowser({
       />
 
       {filtered.length === 0 ? (
-        <Card>
-          <CardContent>
+        <Card className="rounded-b-2xl rounded-t-none border-t-0 shadow-xs">
+          <CardContent className="pt-6">
             <EmptyState
               icon={<Inbox className="size-6" />}
               title="No se encontraron solicitudes"
@@ -196,26 +196,28 @@ export function TicketsBrowser({
           </CardContent>
         </Card>
       ) : view === "kanban" ? (
-        <TicketKanban
-          tickets={pageTickets}
-          usersList={users}
-          sitesById={sitesById}
-          onMove={handleMove}
-        />
+        <div className="pt-3">
+          <TicketKanban
+            tickets={pageTickets}
+            usersList={users}
+            sitesById={sitesById}
+            onMove={handleMove}
+          />
+        </div>
       ) : (
-        <div className="overflow-hidden rounded-xl bg-card text-sm ring-1 ring-foreground/10">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
-            <h2 className="text-base font-semibold text-foreground">
-              Registro de Tickets
+        <div className="overflow-hidden rounded-b-2xl border-b border-x border-border bg-card text-sm shadow-xs">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-3 bg-muted/20">
+            <h2 className="text-sm font-bold text-foreground">
+              Registro Operativo de Tickets
             </h2>
             <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground">
+              <span className="text-xs text-muted-foreground">
                 Mostrando{" "}
-                <span className="font-medium tabular-nums text-foreground">
+                <span className="font-semibold tabular-nums text-foreground">
                   {pageTickets.length}
                 </span>{" "}
                 de{" "}
-                <span className="font-medium tabular-nums text-foreground">
+                <span className="font-semibold tabular-nums text-foreground">
                   {filtered.length}
                 </span>
               </span>

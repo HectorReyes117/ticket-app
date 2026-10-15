@@ -3,6 +3,7 @@ import { cn } from "@/utils";
 export interface FilterPill {
   value: string;
   label: string;
+  count?: number;
 }
 
 interface FilterPillsProps {

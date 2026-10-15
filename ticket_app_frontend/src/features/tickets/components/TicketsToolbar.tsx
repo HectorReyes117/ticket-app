@@ -1,17 +1,7 @@
-import { RotateCcw } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
-import { FilterPills, type FilterPill } from "@/components/common/FilterPills";
-import { SearchInput } from "@/components/common/SearchInput";
+import { ArrowUpDown, FilterX, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { ViewToggle } from "@/components/common/ViewToggle";
-import { PRIORITIES, PRIORITY_META } from "@/utils";
+import { PRIORITIES, PRIORITY_META, cn } from "@/utils";
 import type { Site, TicketView, User } from "@/types";
 import {
   TICKET_SORT_OPTIONS,
@@ -19,6 +9,7 @@ import {
   type TicketQueryState,
   type TicketSortKey,
 } from "../services/ticketQuery";
+import type { FilterPill } from "@/components/common/FilterPills";
 
 interface TicketsToolbarProps {
   filters: TicketQueryState;
@@ -46,154 +37,153 @@ export function TicketsToolbar({
   onViewChange,
 }: TicketsToolbarProps) {
   return (
-    <div className="space-y-3">
-      <FilterPills
-        ariaLabel="Filtrar por estado"
-        options={pillOptions}
-        value={filters.pill}
-        onValueChange={(value) => onChange({ pill: value as TicketPillFilter })}
-      />
+    <div className="bg-card rounded-t-2xl border-t border-x border-border shadow-xs flex flex-col overflow-hidden">
+      {/* Role / Status Navigation Tabs (Same style as Personal y Usuarios) */}
+      <div className="px-5 pt-3 bg-muted/40 border-b border-border flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-1">
+          {pillOptions.map((tab) => {
+            const isActive = filters.pill === tab.value;
+            return (
+              <button
+                key={tab.value}
+                type="button"
+                onClick={() => onChange({ pill: tab.value as TicketPillFilter })}
+                className={cn(
+                  "px-4 py-2 text-xs font-semibold rounded-t-xl flex items-center gap-2 transition-colors border-b-2",
+                  isActive
+                    ? "bg-card text-brand border-brand shadow-xs"
+                    : "text-muted-foreground hover:text-foreground border-transparent hover:bg-muted/60",
+                )}
+              >
+                <span>{tab.label}</span>
+                {typeof tab.count === "number" && (
+                  <span
+                    className={cn(
+                      "px-1.5 py-0.2 rounded-full text-[10px]",
+                      isActive ? "bg-brand text-white" : "bg-muted text-muted-foreground",
+                    )}
+                  >
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
 
-      <Card>
-        <CardContent className="flex flex-col gap-3 p-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex flex-1 flex-wrap items-center gap-2">
-            <SearchInput
-              value={filters.search}
-              onChange={(search) => onChange({ search })}
-              placeholder="Filtrar por asunto, solicitante o ID…"
-              className="w-full sm:w-72"
-              label="Buscar solicitudes"
-            />
+        {/* View Toggle (Table / Kanban) */}
+        <div className="pb-2">
+          <ViewToggle value={view} onValueChange={onViewChange} />
+        </div>
+      </div>
 
-            <Select
-              value={filters.area}
-              onValueChange={(value) => onChange({ area: value ?? "all" })}
-              items={[
-                { value: "all", label: "Todas las áreas" },
-                ...areaOptions.map((area) => ({ value: area, label: area })),
-              ]}
-            >
-              <SelectTrigger className="w-44" aria-label="Filtrar por área">
-                <SelectValue placeholder="Área" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas las áreas</SelectItem>
-                {areaOptions.map((area) => (
-                  <SelectItem key={area} value={area}>
-                    {area}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      {/* Filter Controls Row matching Personal y Usuarios */}
+      <div className="p-4 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 bg-card border-b border-border">
+        {/* Search Input */}
+        <div className="relative flex-1 max-w-md">
+          <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+          <Input
+            type="text"
+            placeholder="Buscar por asunto, solicitante, ID o código..."
+            value={filters.search}
+            onChange={(e) => onChange({ search: e.target.value })}
+            className="pl-9 text-xs rounded-xl bg-muted/50 border-border focus-visible:ring-brand"
+          />
+        </div>
 
-            <Select
-              value={filters.priority}
-              onValueChange={(value) =>
-                onChange({ priority: (value ?? "all") as TicketQueryState["priority"] })
-              }
-              items={[
-                { value: "all", label: "Todas las prioridades" },
-                ...PRIORITIES.map((priority) => ({
-                  value: priority,
-                  label: PRIORITY_META[priority].label,
-                })),
-              ]}
-            >
-              <SelectTrigger className="w-40" aria-label="Filtrar por prioridad">
-                <SelectValue placeholder="Prioridad" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas las prioridades</SelectItem>
-                {PRIORITIES.map((priority) => (
-                  <SelectItem key={priority} value={priority}>
-                    {PRIORITY_META[priority].label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        {/* Filter Dropdowns */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* Sede */}
+          <select
+            value={filters.siteId}
+            onChange={(e) => onChange({ siteId: e.target.value })}
+            className="bg-muted/60 text-foreground text-xs font-medium rounded-xl px-3 py-2 border border-border focus:ring-1 focus:ring-brand"
+          >
+            <option value="all">Sede: Todas</option>
+            {sites.map((site) => (
+              <option key={site.id} value={site.id}>
+                {site.name}
+              </option>
+            ))}
+          </select>
 
-            <Select
-              value={filters.technicianId}
-              onValueChange={(value) => onChange({ technicianId: value ?? "all" })}
-              items={[
-                { value: "all", label: "Cualquier técnico" },
-                ...technicians.map((technician) => ({
-                  value: technician.id,
-                  label: technician.name,
-                })),
-              ]}
-            >
-              <SelectTrigger className="w-40" aria-label="Filtrar por técnico">
-                <SelectValue placeholder="Técnico" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Cualquier técnico</SelectItem>
-                {technicians.map((technician) => (
-                  <SelectItem key={technician.id} value={technician.id}>
-                    {technician.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          {/* Área */}
+          <select
+            value={filters.area}
+            onChange={(e) => onChange({ area: e.target.value })}
+            className="bg-muted/60 text-foreground text-xs font-medium rounded-xl px-3 py-2 border border-border focus:ring-1 focus:ring-brand"
+          >
+            <option value="all">Área: Todas</option>
+            {areaOptions.map((area) => (
+              <option key={area} value={area}>
+                {area}
+              </option>
+            ))}
+          </select>
 
-            <Select
-              value={filters.siteId}
-              onValueChange={(value) => onChange({ siteId: value ?? "all" })}
-              items={[
-                { value: "all", label: "Todas las sedes" },
-                ...sites.map((site) => ({ value: site.id, label: site.name })),
-              ]}
-            >
-              <SelectTrigger className="w-44" aria-label="Filtrar por sede">
-                <SelectValue placeholder="Sede" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas las sedes</SelectItem>
-                {sites.map((site) => (
-                  <SelectItem key={site.id} value={site.id}>
-                    {site.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          {/* Prioridad */}
+          <select
+            value={filters.priority}
+            onChange={(e) =>
+              onChange({ priority: e.target.value as TicketQueryState["priority"] })
+            }
+            className="bg-muted/60 text-foreground text-xs font-medium rounded-xl px-3 py-2 border border-border focus:ring-1 focus:ring-brand"
+          >
+            <option value="all">Prioridad: Todas</option>
+            {PRIORITIES.map((priority) => (
+              <option key={priority} value={priority}>
+                {PRIORITY_META[priority].label}
+              </option>
+            ))}
+          </select>
 
-            <Select
+          {/* Técnico */}
+          <select
+            value={filters.technicianId}
+            onChange={(e) => onChange({ technicianId: e.target.value })}
+            className="bg-muted/60 text-foreground text-xs font-medium rounded-xl px-3 py-2 border border-border focus:ring-1 focus:ring-brand"
+          >
+            <option value="all">Técnico: Cualquiera</option>
+            {technicians.map((technician) => (
+              <option key={technician.id} value={technician.id}>
+                {technician.name}
+              </option>
+            ))}
+          </select>
+
+          {/* Ordenar por */}
+          <div className="flex items-center gap-1.5 pl-1 border-l border-border">
+            <ArrowUpDown className="size-3.5 text-muted-foreground" />
+            <select
               value={filters.sort}
-              onValueChange={(value) =>
-                onChange({ sort: (value ?? "recent") as TicketSortKey })
-              }
-              items={TICKET_SORT_OPTIONS.map((option) => ({
-                value: option.value,
-                label: option.label,
-              }))}
+              onChange={(e) => onChange({ sort: e.target.value as TicketSortKey })}
+              className="bg-muted/60 text-foreground text-xs font-medium rounded-xl px-2.5 py-2 border border-border focus:ring-1 focus:ring-brand"
             >
-              <SelectTrigger className="w-44" aria-label="Ordenar por">
-                <SelectValue placeholder="Ordenar por" />
-              </SelectTrigger>
-              <SelectContent>
-                {TICKET_SORT_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={onClear}
-              disabled={!filtersActive}
-              className="gap-1.5"
-            >
-              <RotateCcw className="size-4" />
-              Limpiar filtros
-            </Button>
+              {TICKET_SORT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
           </div>
 
-          <ViewToggle value={view} onValueChange={onViewChange} />
-        </CardContent>
-      </Card>
+          {/* Botón Limpiar Filtros */}
+          <button
+            type="button"
+            onClick={onClear}
+            disabled={!filtersActive}
+            title="Limpiar filtros"
+            className={cn(
+              "p-2 rounded-xl border border-border transition-colors",
+              filtersActive
+                ? "text-brand hover:bg-brand-soft/50 border-brand/40 cursor-pointer"
+                : "text-muted-foreground/40 border-border/50 cursor-not-allowed",
+            )}
+          >
+            <FilterX className="size-4" />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

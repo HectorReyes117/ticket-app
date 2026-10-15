@@ -6,7 +6,6 @@ import {
   FolderKanban,
   Inbox,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/common/PageHeader";
 import { EmptyState } from "@/components/common/EmptyState";
 import { useSiteStore, useTicketStore, useUserStore } from "@/store";
@@ -148,43 +147,44 @@ export function DashboardPage() {
 
       <KpiSection items={kpis} />
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
-        <Card className="xl:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-base">Solicitudes por estado</CardTitle>
-          </CardHeader>
-          <CardContent>
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-5">
+        <div className="xl:col-span-2 bg-card rounded-2xl border border-border shadow-xs flex flex-col overflow-hidden">
+          <div className="p-5 border-b border-border flex items-center justify-between">
+            <h2 className="text-sm font-bold text-foreground">Solicitudes por Estado</h2>
+            <span className="text-xs text-muted-foreground">Distribución actual</span>
+          </div>
+          <div className="p-5 flex-1">
             <TicketsByStatusChart data={byStatus} />
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card className="xl:col-span-3">
-          <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base">Actividad de los últimos 7 días</CardTitle>
-            <span className="flex items-center gap-4 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1.5">
+        <div className="xl:col-span-3 bg-card rounded-2xl border border-border shadow-xs flex flex-col overflow-hidden">
+          <div className="p-5 border-b border-border flex items-center justify-between">
+            <h2 className="text-sm font-bold text-foreground">Actividad de los Últimos 7 Días</h2>
+            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1.5 font-medium">
                 <span className="size-2 rounded-full bg-brand" />
                 Creadas
               </span>
-              <span className="flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-brand-accent" />
+              <span className="flex items-center gap-1.5 font-medium">
+                <span className="size-2 rounded-full bg-emerald-500" />
                 Resueltas
               </span>
-            </span>
-          </CardHeader>
-          <CardContent>
+            </div>
+          </div>
+          <div className="p-5 flex-1">
             <TicketsTrendChart data={trend} />
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
-        <Card className="xl:col-span-3">
-          <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base">Solicitudes recientes</CardTitle>
-            <span className="text-sm text-muted-foreground">Últimas 5</span>
-          </CardHeader>
-          <CardContent>
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-5">
+        <div className="xl:col-span-3 bg-card rounded-2xl border border-border shadow-xs flex flex-col overflow-hidden">
+          <div className="p-5 border-b border-border flex items-center justify-between">
+            <h2 className="text-sm font-bold text-foreground">Solicitudes Recientes</h2>
+            <span className="text-xs text-muted-foreground font-medium">Últimas 5 ingresadas</span>
+          </div>
+          <div className="p-5 flex-1">
             {recentTickets.length > 0 ? (
               <RecentTickets
                 tickets={recentTickets}
@@ -198,17 +198,18 @@ export function DashboardPage() {
                 description="Crea tu primera solicitud de servicio."
               />
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card className="xl:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-base">Carga del equipo técnico</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="xl:col-span-2 bg-card rounded-2xl border border-border shadow-xs flex flex-col overflow-hidden">
+          <div className="p-5 border-b border-border flex items-center justify-between">
+            <h2 className="text-sm font-bold text-foreground">Carga del Equipo Técnico</h2>
+            <span className="text-xs text-muted-foreground font-medium">Asignaciones en curso</span>
+          </div>
+          <div className="p-5 flex-1">
             <TechnicianLoad technicians={technicians} />
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
