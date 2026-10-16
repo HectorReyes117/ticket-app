@@ -37,6 +37,7 @@ public class LocationDto
 public class GetLocationsQuery : IRequest<ApiResponse<PagedResult<LocationDto>>>
 {
     public string? Search { get; set; }
+    public string? FacilityType { get; set; }
     public bool? ActiveOnly { get; set; }
     public int PageNumber { get; set; } = 1;
     public int PageSize { get; set; } = 50;
@@ -69,9 +70,30 @@ public class GetLocationsQueryHandler : IRequestHandler<GetLocationsQuery, ApiRe
                                      l.Code.ToLower().Contains(search));
         }
 
-        if (request.ActiveOnly.HasValue && request.ActiveOnly.Value)
+        if (!string.IsNullOrWhiteSpace(request.FacilityType) && request.FacilityType.ToLower() != "all")
         {
-            query = query.Where(l => l.IsActive);
+            var fType = request.FacilityType.Trim().ToLower();
+            if (fType == "main")
+            {
+                query = query.Where(l => l.FacilityType.ToLower().Contains("principal") || l.FacilityType.ToLower().Contains("campus"));
+            }
+            else if (fType == "dc" || fType == "datacenter")
+            {
+                query = query.Where(l => l.FacilityType.ToLower().Contains("datos") || l.FacilityType.ToLower().Contains("data") || l.Name.ToLower().Contains("data") || l.Name.ToLower().Contains("datos"));
+            }
+            else if (fType == "regional" || fType == "branch")
+            {
+                query = query.Where(l => l.FacilityType.ToLower().Contains("sucursal") || l.FacilityType.ToLower().Contains("regional") || l.FacilityType.ToLower().Contains("edificio"));
+            }
+            else
+            {
+                query = query.Where(l => l.FacilityType.ToLower().Contains(fType));
+            }
+        }
+
+        if (request.ActiveOnly.HasValue)
+        {
+            query = query.Where(l => l.IsActive == request.ActiveOnly.Value);
         }
 
         var totalCount = await query.CountAsync(cancellationToken);

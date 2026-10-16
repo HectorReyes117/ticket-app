@@ -15,6 +15,7 @@ interface SiteStore {
   ready: boolean;
   fetchSites: (params?: {
     search?: string;
+    facilityType?: string;
     activeOnly?: boolean;
     pageNumber?: number;
     pageSize?: number;

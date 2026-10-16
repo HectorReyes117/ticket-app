@@ -47,13 +47,14 @@ export function SitesPage() {
         pageSize: pageSize,
       };
       if (searchQuery.trim()) params.search = searchQuery.trim();
+      if (categoryFilter !== "all") params.facilityType = categoryFilter;
       if (statusFilter === "active") params.activeOnly = true;
       if (statusFilter === "inactive") params.activeOnly = false;
       fetchSites(params);
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchQuery, statusFilter, page, pageSize, fetchSites]);
+  }, [searchQuery, categoryFilter, statusFilter, page, pageSize, fetchSites]);
 
   useEffect(
     () => () => {

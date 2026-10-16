@@ -12,6 +12,7 @@ public class LocationsController : BaseApiController
     [HttpGet]
     public async Task<ActionResult<ApiResponse<PagedResult<LocationDto>>>> GetLocations(
         [FromQuery] string? search,
+        [FromQuery] string? facilityType,
         [FromQuery] bool? activeOnly,
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 50)
@@ -19,6 +20,7 @@ public class LocationsController : BaseApiController
         var result = await Mediator.Send(new GetLocationsQuery
         {
             Search = search,
+            FacilityType = facilityType,
             ActiveOnly = activeOnly,
             PageNumber = pageNumber,
             PageSize = pageSize

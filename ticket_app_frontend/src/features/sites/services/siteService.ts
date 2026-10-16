@@ -50,6 +50,7 @@ export interface PagedResult<T> {
 
 export async function listSites(params?: {
   search?: string;
+  facilityType?: string;
   activeOnly?: boolean;
   pageNumber?: number;
   pageSize?: number;
