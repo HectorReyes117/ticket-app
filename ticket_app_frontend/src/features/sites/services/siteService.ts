@@ -79,16 +79,14 @@ export async function listSites(params?: {
 
 export async function createSite(draft: SiteDraft): Promise<Site> {
   const payload = {
-    code: `LOC-${Math.floor(100 + Math.random() * 900)}`,
     name: draft.name,
-    facilityType: "Campus",
+    facilityType: draft.facilityType || "Campus Principal",
     address: draft.address,
     city: draft.city,
+    postalCode: draft.postalCode,
     phone: draft.phone,
-    areas: draft.areas.map((areaName) => ({
-      name: areaName,
-      floorOrBlock: "Nivel 1",
-    })),
+    custodianId: draft.custodianId,
+    initialAreas: draft.areas,
   };
 
   const created = await api.post<BackendLocationDto>("/locations", payload);

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Building2,
   Check,
@@ -45,20 +45,19 @@ interface FormState {
 }
 
 const emptyForm: FormState = {
-  name: "Sede Central Datacenter Piso 2",
+  name: "",
   type: "campus",
-  code: "#SED-0840",
-  address: "Av. Andrés Bello 2711, Las Condes",
-  city: "Santiago / Las Condes / RM",
-  postalCode: "7550000 • Frente a Metro Tobalaba",
-  levels: "Subterráneo -1, Piso 1 (Recepción), Piso 2 (IT & Servidores)",
-  capacity: "350 personas",
+  code: "",
+  address: "",
+  city: "",
+  postalCode: "",
+  levels: "",
+  capacity: "",
   custodianId: "",
-  phone: "+56 2 2840 9200",
-  extension: "Ext. 8401",
-  securityNotes:
-    "Acceso restringido con tarjeta biométrica 24/7. Notificar a guardia antes de ingresar contratistas. Tableros eléctricos ubicados en sector norponiente.",
-  areas: ["Sala Servidores", "Datacenter Nivel 1", "Taller Soporte IT"],
+  phone: "",
+  extension: "",
+  securityNotes: "",
+  areas: [],
 };
 
 export function SiteFormSheet({ open, onOpenChange }: SiteFormSheetProps) {
@@ -68,6 +67,16 @@ export function SiteFormSheet({ open, onOpenChange }: SiteFormSheetProps) {
   const [newAreaInput, setNewAreaInput] = useState("");
   const [showAddAreaInput, setShowAddAreaInput] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
+
+  // Reset form whenever sheet is opened
+  useEffect(() => {
+    if (open) {
+      setForm(emptyForm);
+      setErrors({});
+      setNewAreaInput("");
+      setShowAddAreaInput(false);
+    }
+  }, [open]);
 
   const custodians = users.filter((u) => u.active);
 
@@ -103,12 +112,22 @@ export function SiteFormSheet({ open, onOpenChange }: SiteFormSheetProps) {
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
+    const facilityTypeMap: Record<InstallationType, string> = {
+      campus: "Campus Principal",
+      dc: "Centro de Datos",
+      regional: "Sucursal Regional",
+      almacen: "Almacén / Taller IT",
+    };
+
     try {
       await createSite({
-        name: form.name,
-        address: form.address,
-        city: form.city,
-        phone: form.phone,
+        name: form.name.trim(),
+        facilityType: facilityTypeMap[form.type] || "Campus Principal",
+        address: form.address.trim(),
+        city: form.city.trim(),
+        postalCode: form.postalCode.trim() || undefined,
+        phone: form.phone.trim(),
+        custodianId: form.custodianId ? parseInt(form.custodianId, 10) : undefined,
         areas: form.areas.length > 0 ? form.areas : ["Área General"],
       });
 

@@ -11,8 +11,11 @@ export interface Site {
 
 export interface SiteDraft {
   name: string;
+  facilityType?: string;
   address: string;
   city: string;
+  postalCode?: string;
   phone: string;
+  custodianId?: number;
   areas: string[];
 }
