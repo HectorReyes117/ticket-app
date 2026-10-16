@@ -7,6 +7,10 @@ export interface Site {
   city: string;
   postalCode?: string;
   phone: string;
+  ipGuardExtension?: string;
+  securityNotes?: string;
+  estimatedStaffCapacity?: string;
+  availableFloors?: string;
   custodianId?: number;
   managers: string[];
   areas: string[];
@@ -20,6 +24,10 @@ export interface SiteDraft {
   city: string;
   postalCode?: string;
   phone: string;
+  ipGuardExtension?: string;
+  securityNotes?: string;
+  estimatedStaffCapacity?: string;
+  availableFloors?: string;
   custodianId?: number;
   areas: string[];
 }

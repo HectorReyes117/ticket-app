@@ -11,6 +11,10 @@ public class Location : BaseEntity, IAggregateRoot
     public string City { get; set; } = string.Empty;
     public string? PostalCode { get; set; }
     public string Phone { get; set; } = string.Empty;
+    public string? IpGuardExtension { get; set; }
+    public string? SecurityNotes { get; set; }
+    public string? EstimatedStaffCapacity { get; set; }
+    public string? AvailableFloors { get; set; }
     public int? CustodianId { get; set; }
     public bool IsActive { get; set; } = true;
 

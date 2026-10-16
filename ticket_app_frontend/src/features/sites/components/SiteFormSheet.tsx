@@ -90,12 +90,12 @@ export function SiteFormSheet({ open, onOpenChange, siteToEdit }: SiteFormSheetP
           address: siteToEdit.address || "",
           city: siteToEdit.city || "",
           postalCode: siteToEdit.postalCode || "",
-          levels: "",
-          capacity: "",
+          levels: siteToEdit.availableFloors || "",
+          capacity: siteToEdit.estimatedStaffCapacity || "",
           custodianId: siteToEdit.custodianId ? String(siteToEdit.custodianId) : "",
           phone: siteToEdit.phone || "",
-          extension: "",
-          securityNotes: "",
+          extension: siteToEdit.ipGuardExtension || "",
+          securityNotes: siteToEdit.securityNotes || "",
           areas: siteToEdit.areas ? [...siteToEdit.areas] : [],
         });
       } else {
@@ -157,6 +157,10 @@ export function SiteFormSheet({ open, onOpenChange, siteToEdit }: SiteFormSheetP
           city: form.city.trim(),
           postalCode: form.postalCode.trim() || undefined,
           phone: form.phone.trim(),
+          ipGuardExtension: form.extension.trim() || undefined,
+          securityNotes: form.securityNotes.trim() || undefined,
+          estimatedStaffCapacity: form.capacity.trim() || undefined,
+          availableFloors: form.levels.trim() || undefined,
           custodianId: form.custodianId ? parseInt(form.custodianId, 10) : undefined,
           areas: form.areas,
         });
@@ -174,6 +178,10 @@ export function SiteFormSheet({ open, onOpenChange, siteToEdit }: SiteFormSheetP
           city: form.city.trim(),
           postalCode: form.postalCode.trim() || undefined,
           phone: form.phone.trim(),
+          ipGuardExtension: form.extension.trim() || undefined,
+          securityNotes: form.securityNotes.trim() || undefined,
+          estimatedStaffCapacity: form.capacity.trim() || undefined,
+          availableFloors: form.levels.trim() || undefined,
           custodianId: form.custodianId ? parseInt(form.custodianId, 10) : undefined,
           areas: form.areas.length > 0 ? form.areas : ["Área General"],
         });

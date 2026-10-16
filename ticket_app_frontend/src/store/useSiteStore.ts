@@ -62,7 +62,7 @@ export const useSiteStore = create<SiteStore>((set) => ({
   updateSite: async (id, draft) => {
     const updated = await apiUpdateSite(id, draft);
     set((state) => ({
-      items: state.items.map((s) => (s.id === id ? updated : s)),
+      items: state.items.map((s) => (String(s.id) === String(id) ? updated : s)),
     }));
     return updated;
   },

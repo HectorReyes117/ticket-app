@@ -27,6 +27,10 @@ public class LocationDto
     public string City { get; set; } = string.Empty;
     public string? PostalCode { get; set; }
     public string Phone { get; set; } = string.Empty;
+    public string? IpGuardExtension { get; set; }
+    public string? SecurityNotes { get; set; }
+    public string? EstimatedStaffCapacity { get; set; }
+    public string? AvailableFloors { get; set; }
     public int? CustodianId { get; set; }
     public string? CustodianName { get; set; }
     public bool IsActive { get; set; }
@@ -115,6 +119,10 @@ public class GetLocationsQueryHandler : IRequestHandler<GetLocationsQuery, ApiRe
                 City = l.City,
                 PostalCode = l.PostalCode,
                 Phone = l.Phone,
+                IpGuardExtension = l.IpGuardExtension,
+                SecurityNotes = l.SecurityNotes,
+                EstimatedStaffCapacity = l.EstimatedStaffCapacity,
+                AvailableFloors = l.AvailableFloors,
                 CustodianId = l.CustodianId,
                 CustodianName = l.Custodian != null ? l.Custodian.Name : null,
                 IsActive = l.IsActive,
@@ -143,6 +151,10 @@ public class CreateLocationCommand : IRequest<ApiResponse<LocationDto>>
     public string City { get; set; } = string.Empty;
     public string? PostalCode { get; set; }
     public string Phone { get; set; } = string.Empty;
+    public string? IpGuardExtension { get; set; }
+    public string? SecurityNotes { get; set; }
+    public string? EstimatedStaffCapacity { get; set; }
+    public string? AvailableFloors { get; set; }
     public int? CustodianId { get; set; }
     public List<string>? InitialAreas { get; set; }
 }
@@ -181,6 +193,10 @@ public class CreateLocationCommandHandler : IRequestHandler<CreateLocationComman
             City = request.City.Trim(),
             PostalCode = request.PostalCode?.Trim(),
             Phone = request.Phone.Trim(),
+            IpGuardExtension = request.IpGuardExtension?.Trim(),
+            SecurityNotes = request.SecurityNotes?.Trim(),
+            EstimatedStaffCapacity = request.EstimatedStaffCapacity?.Trim(),
+            AvailableFloors = request.AvailableFloors?.Trim(),
             CustodianId = request.CustodianId,
             IsActive = true
         };
@@ -216,6 +232,10 @@ public class CreateLocationCommandHandler : IRequestHandler<CreateLocationComman
             City = created.City,
             PostalCode = created.PostalCode,
             Phone = created.Phone,
+            IpGuardExtension = created.IpGuardExtension,
+            SecurityNotes = created.SecurityNotes,
+            EstimatedStaffCapacity = created.EstimatedStaffCapacity,
+            AvailableFloors = created.AvailableFloors,
             CustodianId = created.CustodianId,
             CustodianName = created.Custodian?.Name,
             IsActive = created.IsActive,
@@ -242,6 +262,10 @@ public class UpdateLocationCommand : IRequest<ApiResponse<LocationDto>>
     public string City { get; set; } = string.Empty;
     public string? PostalCode { get; set; }
     public string Phone { get; set; } = string.Empty;
+    public string? IpGuardExtension { get; set; }
+    public string? SecurityNotes { get; set; }
+    public string? EstimatedStaffCapacity { get; set; }
+    public string? AvailableFloors { get; set; }
     public int? CustodianId { get; set; }
     public bool? IsActive { get; set; }
     public List<string>? Areas { get; set; }
@@ -284,6 +308,18 @@ public class UpdateLocationCommandHandler : IRequestHandler<UpdateLocationComman
 
         if (!string.IsNullOrWhiteSpace(request.Phone))
             location.Phone = request.Phone.Trim();
+
+        if (request.IpGuardExtension != null)
+            location.IpGuardExtension = request.IpGuardExtension.Trim();
+
+        if (request.SecurityNotes != null)
+            location.SecurityNotes = request.SecurityNotes.Trim();
+
+        if (request.EstimatedStaffCapacity != null)
+            location.EstimatedStaffCapacity = request.EstimatedStaffCapacity.Trim();
+
+        if (request.AvailableFloors != null)
+            location.AvailableFloors = request.AvailableFloors.Trim();
 
         if (request.CustodianId.HasValue)
             location.CustodianId = request.CustodianId.Value > 0 ? request.CustodianId.Value : null;
@@ -338,6 +374,10 @@ public class UpdateLocationCommandHandler : IRequestHandler<UpdateLocationComman
             City = location.City,
             PostalCode = location.PostalCode,
             Phone = location.Phone,
+            IpGuardExtension = location.IpGuardExtension,
+            SecurityNotes = location.SecurityNotes,
+            EstimatedStaffCapacity = location.EstimatedStaffCapacity,
+            AvailableFloors = location.AvailableFloors,
             CustodianId = location.CustodianId,
             CustodianName = location.Custodian?.Name,
             IsActive = location.IsActive,

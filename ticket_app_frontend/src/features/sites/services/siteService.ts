@@ -18,6 +18,10 @@ export interface BackendLocationDto {
   city: string;
   postalCode?: string;
   phone: string;
+  ipGuardExtension?: string;
+  securityNotes?: string;
+  estimatedStaffCapacity?: string;
+  availableFloors?: string;
   custodianId?: number;
   custodianName?: string;
   isActive: boolean;
@@ -35,6 +39,10 @@ export function mapBackendLocationToSite(dto: BackendLocationDto): Site {
     city: dto.city,
     postalCode: dto.postalCode,
     phone: dto.phone,
+    ipGuardExtension: dto.ipGuardExtension,
+    securityNotes: dto.securityNotes,
+    estimatedStaffCapacity: dto.estimatedStaffCapacity,
+    availableFloors: dto.availableFloors,
     custodianId: dto.custodianId,
     managers: dto.custodianName ? [dto.custodianName] : ["Dirección General"],
     areas: (dto.areas || []).map((a) => a.name),
@@ -89,6 +97,10 @@ export async function createSite(draft: SiteDraft): Promise<Site> {
     city: draft.city,
     postalCode: draft.postalCode,
     phone: draft.phone,
+    ipGuardExtension: draft.ipGuardExtension,
+    securityNotes: draft.securityNotes,
+    estimatedStaffCapacity: draft.estimatedStaffCapacity,
+    availableFloors: draft.availableFloors,
     custodianId: draft.custodianId,
     initialAreas: draft.areas,
   };
@@ -105,6 +117,10 @@ export async function updateSite(id: string | number, draft: Partial<SiteDraft &
     city: draft.city,
     postalCode: draft.postalCode,
     phone: draft.phone,
+    ipGuardExtension: draft.ipGuardExtension,
+    securityNotes: draft.securityNotes,
+    estimatedStaffCapacity: draft.estimatedStaffCapacity,
+    availableFloors: draft.availableFloors,
     custodianId: draft.custodianId,
     isActive: draft.active,
     areas: draft.areas,

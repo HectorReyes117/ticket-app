@@ -42,6 +42,18 @@ public class LocationConfiguration : IEntityTypeConfiguration<Location>
             .IsRequired()
             .HasMaxLength(25);
 
+        builder.Property(l => l.IpGuardExtension)
+            .HasMaxLength(50);
+
+        builder.Property(l => l.SecurityNotes)
+            .HasMaxLength(1000);
+
+        builder.Property(l => l.EstimatedStaffCapacity)
+            .HasMaxLength(100);
+
+        builder.Property(l => l.AvailableFloors)
+            .HasMaxLength(250);
+
         builder.Property(l => l.IsActive)
             .HasDefaultValue(true);
 

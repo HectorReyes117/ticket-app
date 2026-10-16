@@ -117,6 +117,10 @@ namespace TicketApp.Infrastructure.Migrations
                         .HasMaxLength(250)
                         .HasColumnType("nvarchar(250)");
 
+                    b.Property<string>("AvailableFloors")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
                     b.Property<string>("City")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -130,8 +134,16 @@ namespace TicketApp.Infrastructure.Migrations
                     b.Property<int?>("CustodianId")
                         .HasColumnType("int");
 
+                    b.Property<string>("EstimatedStaffCapacity")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<string>("FacilityType")
                         .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("IpGuardExtension")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
@@ -153,6 +165,10 @@ namespace TicketApp.Infrastructure.Migrations
                     b.Property<string>("PostalCode")
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("SecurityNotes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
                     b.HasKey("Id");
 
