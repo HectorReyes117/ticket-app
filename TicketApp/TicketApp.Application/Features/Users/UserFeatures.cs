@@ -130,6 +130,7 @@ public class CreateUserCommand : IRequest<ApiResponse<UserDto>>
     public string Position { get; set; } = string.Empty;
     public string Phone { get; set; } = string.Empty;
     public string? Extension { get; set; }
+    public string? AvatarUrl { get; set; }
     public int? LocationId { get; set; }
     public int? DepartmentId { get; set; }
 }
@@ -180,6 +181,7 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, ApiRe
             Position = request.Position.Trim(),
             Phone = request.Phone.Trim(),
             Extension = request.Extension?.Trim(),
+            AvatarUrl = request.AvatarUrl?.Trim(),
             LocationId = request.LocationId,
             DepartmentId = request.DepartmentId,
             Presence = UserPresence.Online,

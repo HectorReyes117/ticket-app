@@ -8,7 +8,6 @@ import {
   RefreshCw,
   Search,
   ShieldCheck,
-  TrendingUp,
   UserCheck,
   Eye,
   Edit,
@@ -19,6 +18,7 @@ import { toast } from "@/components/ui/toast";
 import { TicketsTableFooter } from "@/features/tickets/components/TicketsTableFooter";
 import { DEFAULT_PAGE_SIZE } from "@/features/tickets/services/ticketQuery";
 import { SiteFormSheet } from "@/features/sites/components/SiteFormSheet";
+import { UserAvatar } from "@/components/common/UserAvatar/UserAvatar";
 import { useSiteStore, useUserStore } from "@/store";
 import type { Site } from "@/types";
 import { cn } from "@/utils";
@@ -30,6 +30,13 @@ export function SitesPage() {
   const loading = useSiteStore((state) => state.loading);
   const fetchSites = useSiteStore((state) => state.fetchSites);
   const users = useUserStore((state) => state.items);
+  const fetchUsers = useUserStore((state) => state.fetchUsers);
+
+  useEffect(() => {
+    if (users.length === 0) {
+      fetchUsers({ pageSize: 100, activeOnly: true });
+    }
+  }, [users.length, fetchUsers]);
 
   const [sheetOpen, setSheetOpen] = useState(false);
   const [siteToEdit, setSiteToEdit] = useState<Site | null>(null);
@@ -186,14 +193,14 @@ export function SitesPage() {
           </div>
           <div>
             <div className="text-3xl font-bold tracking-tight text-foreground mb-1">
-              {sites.length}
+              {totalSites}
             </div>
-            <div className="flex items-center gap-1.5 text-xs">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand-soft text-brand-soft-fg font-semibold">
-                <TrendingUp className="size-3" />
-                <span>+2 nuevas</span>
+                <Building2 className="size-3" />
+                <span>{sites.filter((s) => s.active).length} activas</span>
               </span>
-              <span className="text-muted-foreground">este período</span>
+              <span>registradas</span>
             </div>
           </div>
         </div>
@@ -208,11 +215,11 @@ export function SitesPage() {
           </div>
           <div>
             <div className="text-3xl font-bold tracking-tight text-foreground mb-1">
-              {totalAreas || 18}
+              {totalAreas}
             </div>
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <span className="size-1.5 rounded-full bg-brand" />
-              <span>Pisos, salas y centros de datos</span>
+              <span>Pisos, salas y áreas habilitadas</span>
             </div>
           </div>
         </div>
@@ -227,11 +234,11 @@ export function SitesPage() {
           </div>
           <div>
             <div className="text-3xl font-bold tracking-tight text-foreground mb-1">
-              {users.filter((u) => u.role === "technician" || u.role === "admin").length || 8}
+              {users.filter((u) => u.active && (u.role === "technician" || u.role === "admin" || u.role === "director")).length}
             </div>
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <ShieldCheck className="size-3.5 text-brand" />
-              <span>Coordinadores asignados en sitio</span>
+              <span>Personal técnico y administrativo</span>
             </div>
           </div>
         </div>
@@ -242,10 +249,10 @@ export function SitesPage() {
         {/* Category Tabs Navigation */}
         <div className="px-5 pt-3 bg-muted/40 border-b border-border flex flex-wrap items-center gap-1">
           {[
-            { key: "all", label: "Todas", count: sites.length },
-            { key: "main", label: "Sedes Principales", count: Math.ceil(sites.length / 2) },
-            { key: "dc", label: "Centros de Datos", count: 1 },
-            { key: "regional", label: "Sucursales", count: Math.floor(sites.length / 2) },
+            { key: "all", label: "Todas" },
+            { key: "main", label: "Sedes Principales" },
+            { key: "dc", label: "Centros de Datos" },
+            { key: "regional", label: "Sucursales" },
           ].map((tab) => {
             const isActive = categoryFilter === tab.key;
             return (
@@ -261,14 +268,6 @@ export function SitesPage() {
                 )}
               >
                 <span>{tab.label}</span>
-                <span
-                  className={cn(
-                    "px-1.5 py-0.2 rounded-full text-[10px]",
-                    isActive ? "bg-brand text-white" : "bg-muted text-muted-foreground",
-                  )}
-                >
-                  {tab.count}
-                </span>
               </button>
             );
           })}
@@ -362,9 +361,9 @@ export function SitesPage() {
                 </tr>
               ) : (
                 pagedSites.map((site, index) => {
-                const manager = site.managers && site.managers.length > 0
-                  ? managersById[site.managers[0]]
-                  : users[0];
+                const custodianUser = site.custodianId ? managersById[String(site.custodianId)] : undefined;
+                const custodianDisplayName = custodianUser?.name || site.custodianName || (site.managers && site.managers[0]) || "Sin asignar";
+                const custodianAvatarUrl = custodianUser?.avatarUrl;
 
                 return (
                   <tr key={site.id} className="hover:bg-muted/30 transition-colors">
@@ -379,11 +378,11 @@ export function SitesPage() {
                           </span>
                           <div className="flex items-center gap-1.5 mt-1">
                             <span className="text-[11px] text-brand font-mono font-semibold">
-                              #SED-00{index + 1}
+                              {site.code || `#SED-00${index + 1}`}
                             </span>
                             <span className="text-muted-foreground/60">•</span>
                             <span className="px-2 py-0.5 rounded-full bg-muted text-muted-foreground text-[10px] font-medium">
-                              Campus Corporativo
+                              {site.facilityType || "Campus Corporativo"}
                             </span>
                           </div>
                         </div>
@@ -400,26 +399,27 @@ export function SitesPage() {
                     <td className="py-4 px-4">
                       <div className="flex flex-col gap-1 max-w-xs">
                         <span className="font-semibold text-foreground">
-                          {site.areas.length} Niveles Habilitados
+                          {site.availableFloors ? `${site.availableFloors} Pisos / Niveles` : `${site.areas.length} Áreas Habilitadas`}
                         </span>
-                        <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground text-[11px] truncate">
-                          {site.areas.slice(0, 2).join(" • ")}
-                        </span>
+                        {site.areas.length > 0 && (
+                          <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground text-[11px] truncate">
+                            {site.areas.slice(0, 2).join(" • ")}
+                          </span>
+                        )}
                       </div>
                     </td>
 
                     <td className="py-4 px-4">
-                      <div className="flex items-center gap-2">
-                        <div className="size-7 rounded-full bg-brand-soft text-brand flex items-center justify-center text-[10px] font-bold shrink-0">
-                          {(manager?.name ?? "MM")
-                            .split(" ")
-                            .map((n) => n[0])
-                            .slice(0, 2)
-                            .join("")}
-                        </div>
+                      <div className="flex items-center gap-3">
+                        <UserAvatar
+                          name={custodianDisplayName}
+                          avatarUrl={custodianAvatarUrl}
+                          size="sm"
+                          className="shrink-0"
+                        />
                         <div className="flex flex-col min-w-0">
-                          <span className="font-semibold text-foreground truncate">
-                            {manager?.name ?? "Marcela Morales"}
+                          <span className="font-semibold text-foreground text-xs truncate">
+                            {custodianDisplayName}
                           </span>
                           <span className="text-[11px] text-muted-foreground truncate">
                             Custodio • {site.phone || "Ext. 4412"}
@@ -429,14 +429,13 @@ export function SitesPage() {
                     </td>
 
                     <td className="py-4 px-4">
-                      <div className="flex flex-col gap-1.5 w-36">
-                        <div className="flex justify-between text-[11px]">
-                          <span className="font-semibold text-foreground">350 Colab.</span>
-                          <span className="text-muted-foreground">80%</span>
-                        </div>
-                        <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
-                          <div className="bg-brand h-full rounded-full" style={{ width: "80%" }} />
-                        </div>
+                      <div className="flex flex-col gap-1 w-36">
+                        <span className="font-semibold text-foreground text-xs">
+                          {site.estimatedStaffCapacity ? `${site.estimatedStaffCapacity} personas` : "No especificada"}
+                        </span>
+                        <span className="text-[11px] text-muted-foreground">
+                          Capacidad estimada
+                        </span>
                       </div>
                     </td>
 

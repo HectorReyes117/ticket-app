@@ -24,6 +24,7 @@ import { toast } from "@/components/ui/toast";
 import { TicketsTableFooter } from "@/features/tickets/components/TicketsTableFooter";
 import { DEFAULT_PAGE_SIZE } from "@/features/tickets/services/ticketQuery";
 import { UserFormSheet } from "@/features/users/components/UserFormSheet";
+import { UserAvatar } from "@/components/common/UserAvatar";
 import { useSiteStore, useUserStore } from "@/store";
 import { ROLE_META, cn } from "@/utils";
 import type { User } from "@/types";
@@ -436,13 +437,6 @@ export function UsersPage() {
               ) : (
                 pagedUsers.map((user) => {
                 const site = sitesById[user.siteId];
-                const initials = user.name
-                  .split(" ")
-                  .map((p) => p[0])
-                  .slice(0, 2)
-                  .join("")
-                  .toUpperCase();
-
                 const isTechnician = user.role === "technician";
                 const isAdmin = user.role === "admin" || user.role === "director";
 
@@ -451,12 +445,14 @@ export function UsersPage() {
                     {/* Columna 1: Usuario & Datos */}
                     <td className="py-4 px-5">
                       <div className="flex items-start gap-3">
-                        <div
-                          className="size-10 rounded-full flex items-center justify-center font-bold text-xs text-white shrink-0 mt-0.5 shadow-xs"
-                          style={{ backgroundColor: user.color || "#006c46" }}
-                        >
-                          {initials}
-                        </div>
+                        <UserAvatar
+                          name={user.name}
+                          avatarUrl={user.avatarUrl}
+                          color={user.color || "#006c46"}
+                          presence={user.presence}
+                          size="md"
+                          className="mt-0.5"
+                        />
                         <div className="flex flex-col min-w-0">
                           <span className="font-bold text-foreground text-xs leading-snug hover:text-brand cursor-pointer">
                             {user.name}

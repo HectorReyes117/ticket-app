@@ -48,6 +48,7 @@ export function UsersTable({ users, sitesById, onToggleActive }: UsersTableProps
                 <div className="flex items-center gap-3">
                   <UserAvatar
                     name={user.name}
+                    avatarUrl={user.avatarUrl}
                     color={user.color}
                     presence={user.presence}
                     size="md"

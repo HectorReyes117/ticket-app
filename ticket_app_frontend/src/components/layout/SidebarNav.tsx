@@ -9,6 +9,8 @@ import {
   Ticket as TicketIcon,
   Users,
 } from "lucide-react";
+import { useAuth } from "@/context/auth-context";
+import type { Role } from "@/types";
 import { cn } from "@/utils";
 
 export type NavItemName =
@@ -21,24 +23,50 @@ export type NavItemName =
   | "help"
   | "settings";
 
+interface NavItemDef {
+  name: NavItemName;
+  to: string;
+  label: string;
+  icon: typeof Users;
+  allowedRoles?: Role[];
+}
+
 const NAV_GROUPS: Array<{
   title: string;
-  items: Array<{ name: NavItemName; to: string; label: string; icon: typeof Users }>;
+  items: NavItemDef[];
 }> = [
   {
     title: "Principal",
     items: [
       { name: "dashboard", to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { name: "all-tickets", to: "/tickets", label: "Todas las Solicitudes", icon: TicketIcon },
-      { name: "assigned", to: "/tickets/assigned", label: "Mis Asignaciones", icon: ClipboardList },
+      {
+        name: "assigned",
+        to: "/tickets/assigned",
+        label: "Mis Asignaciones",
+        icon: ClipboardList,
+        allowedRoles: ["technician", "admin", "director"],
+      },
       { name: "create", to: "/tickets/new", label: "Crear Solicitud", icon: FilePlus2 },
     ],
   },
   {
     title: "Gestión",
     items: [
-      { name: "users", to: "/users", label: "Personal y Usuarios", icon: Users },
-      { name: "sites", to: "/sites", label: "Sedes y Ubicaciones", icon: Building2 },
+      {
+        name: "users",
+        to: "/users",
+        label: "Personal y Usuarios",
+        icon: Users,
+        allowedRoles: ["admin", "director"],
+      },
+      {
+        name: "sites",
+        to: "/sites",
+        label: "Sedes y Ubicaciones",
+        icon: Building2,
+        allowedRoles: ["admin", "director"],
+      },
     ],
   },
   {
@@ -57,10 +85,20 @@ interface SidebarNavProps {
 
 export function SidebarNav({ collapsed, onNavigate }: SidebarNavProps) {
   const location = useLocation();
+  const { user } = useAuth();
+  const userRole = user?.role;
+
+  const visibleGroups = NAV_GROUPS.map((group) => {
+    const items = group.items.filter((item) => {
+      if (!item.allowedRoles || item.allowedRoles.length === 0) return true;
+      return userRole ? item.allowedRoles.includes(userRole) : false;
+    });
+    return { ...group, items };
+  }).filter((group) => group.items.length > 0);
 
   return (
     <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-4">
-      {NAV_GROUPS.map((group) => (
+      {visibleGroups.map((group) => (
         <div key={group.title}>
           {!collapsed ? (
             <p className="px-3 pb-2 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">

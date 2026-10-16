@@ -12,6 +12,7 @@ export interface Site {
   estimatedStaffCapacity?: string;
   availableFloors?: string;
   custodianId?: number;
+  custodianName?: string;
   managers: string[];
   areas: string[];
   active: boolean;

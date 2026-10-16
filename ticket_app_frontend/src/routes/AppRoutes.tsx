@@ -21,11 +21,20 @@ export function AppRoutes() {
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/tickets" element={<TicketsPage />} />
-          <Route path="/tickets/assigned" element={<MyAssignedTicketsPage />} />
           <Route path="/tickets/new" element={<CreateTicketPage />} />
           <Route path="/tickets/:id" element={<TicketDetailPage />} />
-          <Route path="/users" element={<UsersPage />} />
-          <Route path="/sites" element={<SitesPage />} />
+
+          {/* Rutas exclusivas para Técnicos, Administradores y Directores */}
+          <Route element={<ProtectedRoute allowedRoles={["technician", "admin", "director"]} />}>
+            <Route path="/tickets/assigned" element={<MyAssignedTicketsPage />} />
+          </Route>
+
+          {/* Rutas de Gestión del Sistema (Solo Administradores y Directores) */}
+          <Route element={<ProtectedRoute allowedRoles={["admin", "director"]} />}>
+            <Route path="/users" element={<UsersPage />} />
+            <Route path="/sites" element={<SitesPage />} />
+          </Route>
+
           <Route
             path="/help"
             element={

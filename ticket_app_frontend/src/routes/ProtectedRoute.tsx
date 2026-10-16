@@ -1,8 +1,13 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { Ticket as TicketIcon } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
+import type { Role } from "@/types";
 
-export function ProtectedRoute() {
+interface ProtectedRouteProps {
+  allowedRoles?: Role[];
+}
+
+export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps = {}) {
   const { user, loading } = useAuth();
   const location = useLocation();
 
@@ -18,6 +23,10 @@ export function ProtectedRoute() {
 
   if (!user) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  }
+
+  if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <Outlet />;

@@ -18,6 +18,7 @@ const SIZE = {
 
 interface UserAvatarProps {
   name: string;
+  avatarUrl?: string;
   color?: string;
   presence?: Presence;
   size?: keyof typeof SIZE;
@@ -26,16 +27,23 @@ interface UserAvatarProps {
 
 export function UserAvatar({
   name,
+  avatarUrl,
   color = "#2563eb",
   presence,
   size = "md",
   className,
 }: UserAvatarProps) {
   const tokens = SIZE[size];
+  const fullAvatarUrl = avatarUrl
+    ? avatarUrl.startsWith("http")
+      ? avatarUrl
+      : `http://localhost:5214${avatarUrl}`
+    : "";
+
   return (
     <span className={cn("relative inline-flex shrink-0", className)}>
       <Avatar className={cn("select-none", tokens.avatar)}>
-        <AvatarImage src="" alt="" />
+        <AvatarImage src={fullAvatarUrl} alt={name} />
         <AvatarFallback
           className="border font-semibold text-white"
           style={{ backgroundColor: color, borderColor: color }}

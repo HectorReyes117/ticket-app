@@ -35,6 +35,7 @@ export interface TicketAttachment {
   mimeType: string;
   uploadedAt: string;
   uploadedById: string;
+  fileUrl?: string;
 }
 
 export interface Ticket {

@@ -65,6 +65,7 @@ export function mapBackendUserToFrontend(dto: BackendUserProfile): User {
     title: dto.position || "Colaborador",
     extension: dto.extension ? `Ext. ${dto.extension}` : "",
     employeeCode: dto.employeeCode || `#EMP-${dto.id}`,
+    avatarUrl: dto.avatarUrl,
     queues: ["Soporte General"],
   };
 }

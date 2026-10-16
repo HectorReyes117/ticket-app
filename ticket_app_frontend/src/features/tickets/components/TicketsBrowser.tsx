@@ -18,10 +18,10 @@ import {
   buildPillOptions,
   hasActiveFilters,
   isQuickFilter,
-  type TicketDateRange,
   type TicketQueryState,
 } from "../services/ticketQuery";
 import type { Ticket, TicketStatus, TicketView } from "@/types";
+import type { DateRange } from "react-day-picker";
 
 interface TicketsBrowserProps {
   tickets: Ticket[];
@@ -31,13 +31,15 @@ interface TicketsBrowserProps {
    */
   showQuickFilters?: boolean;
   /** Inclusive created-at window owned by the page header. */
-  createdRange?: TicketDateRange;
+  createdRange?: DateRange;
+  onDateRangeChange?: (range: DateRange | undefined) => void;
 }
 
 export function TicketsBrowser({
   tickets,
   showQuickFilters = false,
   createdRange,
+  onDateRangeChange,
 }: TicketsBrowserProps) {
   const { user } = useAuth();
   const users = useUserStore((state) => state.items);
@@ -46,10 +48,17 @@ export function TicketsBrowser({
   const navigate = useNavigate();
 
   const [filters, setFilters] = useState<TicketQueryState>(DEFAULT_TICKET_QUERY);
+  const [internalRange, setInternalRange] = useState<DateRange | undefined>(createdRange);
   const [view, setView] = useState<TicketView>("table");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    setInternalRange(createdRange);
+  }, [createdRange]);
+
+  const activeRange = internalRange;
 
   const refreshTimer = useRef<number | null>(null);
 
@@ -107,8 +116,8 @@ export function TicketsBrowser({
     [sites],
   );
   const context = useMemo(
-    () => ({ usersById, createdRange }),
-    [usersById, createdRange],
+    () => ({ usersById, createdRange: activeRange }),
+    [usersById, activeRange],
   );
 
   const filtered = useMemo(
@@ -138,7 +147,7 @@ export function TicketsBrowser({
     [users],
   );
 
-  const filtersActive = hasActiveFilters(filters);
+  const filtersActive = hasActiveFilters(filters) || Boolean(activeRange?.from || activeRange?.to);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
   const currentPage = Math.min(page, pageCount);
@@ -155,6 +164,8 @@ export function TicketsBrowser({
 
   const handleClear = () => {
     setFilters((current) => ({ ...DEFAULT_TICKET_QUERY, sort: current.sort }));
+    setInternalRange(undefined);
+    onDateRangeChange?.(undefined);
     setPage(1);
   };
 
@@ -198,6 +209,12 @@ export function TicketsBrowser({
         sites={sites}
         view={view}
         onViewChange={setView}
+        dateRange={activeRange}
+        onDateRangeChange={(rng) => {
+          setInternalRange(rng);
+          onDateRangeChange?.(rng);
+          setPage(1);
+        }}
       />
 
       {ticketsLoading ? (

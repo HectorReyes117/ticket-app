@@ -44,6 +44,7 @@ function AssigneeCell({
     <span className="flex min-w-0 items-center gap-2">
       <UserAvatar
         name={assignee.name}
+        avatarUrl={assignee.avatarUrl}
         color={assignee.color}
         presence={assignee.presence}
         size="sm"
@@ -105,6 +106,7 @@ export function TicketTable({
                     <span className="flex min-w-0 items-center gap-2">
                       <UserAvatar
                         name={requestor.name}
+                        avatarUrl={requestor.avatarUrl}
                         color={requestor.color}
                         size="sm"
                       />

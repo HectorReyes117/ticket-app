@@ -19,6 +19,7 @@ export interface User {
   extension?: string;
   employeeCode?: string;
   queues?: string[];
+  avatarUrl?: string;
 }
 
 export interface UserDraft {
@@ -32,4 +33,5 @@ export interface UserDraft {
   extension?: string;
   employeeCode?: string;
   queues?: string[];
+  avatarUrl?: string;
 }

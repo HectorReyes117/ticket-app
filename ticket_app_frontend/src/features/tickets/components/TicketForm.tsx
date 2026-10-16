@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Airplay,
@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   Code,
   ExternalLink,
-  Eye,
   FileCode,
   FileText,
   FolderSync,
@@ -16,6 +15,7 @@ import {
   Layers,
   Link as LinkIcon,
   List,
+  Loader2,
   Network,
   Paperclip,
   Send,
@@ -36,6 +36,7 @@ import { useSiteStore, useTicketStore, useUserStore } from "@/store";
 import { PRIORITIES, PRIORITY_META } from "@/utils";
 import { cn, required } from "@/utils";
 import type { Priority } from "@/types";
+import { uploadTicketAttachment } from "../services/ticketService";
 
 // Visual 5 categories exactly matching Stitch screen
 interface StitchCategoryItem {
@@ -108,6 +109,7 @@ interface AttachmentFile {
   timeAgo: string;
   status: string;
   type: "image" | "log";
+  file: File;
 }
 
 export function TicketForm() {
@@ -133,6 +135,9 @@ export function TicketForm() {
 
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [attachments, setAttachments] = useState<AttachmentFile[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const activeUsers = useMemo(() => users.filter((u) => u.active), [users]);
   const selectedRequestor = users.find((u) => u.id === form.requestorId) ?? user;
@@ -162,6 +167,32 @@ export function TicketForm() {
     return Object.keys(nextErrors).length === 0;
   };
 
+  const handleFilesSelected = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const newItems: AttachmentFile[] = [];
+
+    Array.from(files).forEach((file) => {
+      const isImg = file.type.startsWith("image/");
+      const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+      newItems.push({
+        id: `${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        name: file.name,
+        size: `${sizeMb} MB`,
+        timeAgo: "Listo para subir",
+        status: "Pendiente",
+        type: isImg ? "image" : "log",
+        file,
+      });
+    });
+
+    setAttachments((prev) => [...prev, ...newItems]);
+    toast.add({
+      title: "Archivos agregados",
+      description: `${newItems.length} archivo(s) añadido(s) a la lista.`,
+      type: "success",
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) {
@@ -174,6 +205,7 @@ export function TicketForm() {
     }
 
     try {
+      setIsSubmitting(true);
       const ticket = await createTicket({
         title: form.title,
         description: form.description,
@@ -184,6 +216,17 @@ export function TicketForm() {
         siteId: form.siteId || (sites[0]?.id ?? "1"),
         area: form.area || "Datacenter Piso 1",
       });
+
+      // Upload any attachments
+      if (attachments.length > 0) {
+        for (const item of attachments) {
+          try {
+            await uploadTicketAttachment(ticket.id, item.file);
+          } catch (uploadErr) {
+            console.error(`Error al subir ${item.name}:`, uploadErr);
+          }
+        }
+      }
 
       toast.add({
         title: "Solicitud creada y enrutada",
@@ -197,25 +240,9 @@ export function TicketForm() {
         description: err.message || "No fue posible conectar con el servidor.",
         type: "danger",
       });
+    } finally {
+      setIsSubmitting(false);
     }
-  };
-
-  const addAttachmentSimulated = () => {
-    const isPng = Math.random() > 0.5;
-    const newFile: AttachmentFile = {
-      id: Date.now().toString(),
-      name: isPng ? `captura_evidencia_${Date.now().toString().slice(-4)}.png` : `registro_evento_${Date.now().toString().slice(-4)}.log`,
-      size: `${(Math.random() * 3 + 0.5).toFixed(1)} MB`,
-      timeAgo: "Subido recién",
-      status: "Verificado",
-      type: isPng ? "image" : "log",
-    };
-    setAttachments((prev) => [...prev, newFile]);
-    toast.add({
-      title: "Archivo adjuntado",
-      description: newFile.name,
-      type: "success",
-    });
   };
 
   const removeAttachment = (id: string) => {
@@ -553,9 +580,31 @@ export function TicketForm() {
           </div>
 
           {/* Drag and Drop Zone exact Stitch styling */}
+          <input
+            type="file"
+            ref={fileInputRef}
+            multiple
+            onChange={(e) => handleFilesSelected(e.target.files)}
+            className="hidden"
+          />
           <div
-            onClick={addAttachmentSimulated}
-            className="border-2 border-dashed border-brand/40 bg-brand-soft/20 hover:bg-brand-soft/30 rounded-2xl p-8 flex flex-col items-center justify-center text-center transition-all cursor-pointer group"
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setIsDragging(false);
+              handleFilesSelected(e.dataTransfer.files);
+            }}
+            className={cn(
+              "border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center transition-all cursor-pointer group",
+              isDragging
+                ? "border-brand bg-brand-soft/40 scale-[1.01]"
+                : "border-brand/40 bg-brand-soft/20 hover:bg-brand-soft/30"
+            )}
           >
             <div className="size-14 rounded-2xl bg-brand-soft/80 flex items-center justify-center text-brand group-hover:scale-110 transition-transform mb-3">
               <UploadCloud className="size-7" />
@@ -596,20 +645,6 @@ export function TicketForm() {
                 <div className="flex items-center gap-1 shrink-0">
                   <button
                     type="button"
-                    title="Previsualizar"
-                    onClick={() =>
-                      toast.add({
-                        title: "Previsualización",
-                        description: `Abriendo ${file.name}`,
-                        type: "info",
-                      })
-                    }
-                    className="p-1.5 text-muted-foreground hover:text-brand hover:bg-card rounded-lg transition-colors"
-                  >
-                    <Eye className="size-4" />
-                  </button>
-                  <button
-                    type="button"
                     title="Eliminar"
                     onClick={() => removeAttachment(file.id)}
                     className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-card rounded-lg transition-colors"
@@ -640,6 +675,7 @@ export function TicketForm() {
             <Button
               type="button"
               variant="ghost"
+              disabled={isSubmitting}
               onClick={() => navigate(-1)}
               className="px-4 py-2.5 rounded-xl text-xs text-muted-foreground hover:text-foreground"
             >
@@ -647,10 +683,20 @@ export function TicketForm() {
             </Button>
             <Button
               type="submit"
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs font-semibold shadow-xs"
+              disabled={isSubmitting}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-brand hover:bg-brand-hover text-white text-xs font-semibold shadow-xs disabled:opacity-60"
             >
-              <Send className="size-4" />
-              <span>Crear y Enrutar Solicitud</span>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  <span>Enviando solicitud y adjuntos...</span>
+                </>
+              ) : (
+                <>
+                  <Send className="size-4" />
+                  <span>Crear y Enrutar Solicitud</span>
+                </>
+              )}
             </Button>
           </div>
         </div>

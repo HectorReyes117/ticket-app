@@ -113,9 +113,9 @@ export function TicketKanbanCard({
       <div className="mt-3 flex items-center justify-between gap-2 border-t border-border pt-2.5">
         <span className="flex items-center gap-2">
           {assignee ? (
-            <UserAvatar name={assignee.name} color={assignee.color} size="xs" />
+            <UserAvatar name={assignee.name} avatarUrl={assignee.avatarUrl} color={assignee.color} size="xs" />
           ) : (
-            <UserAvatar name={requestor?.name ?? "?"} color={requestor?.color} size="xs" />
+            <UserAvatar name={requestor?.name ?? "?"} avatarUrl={requestor?.avatarUrl} color={requestor?.color} size="xs" />
           )}
           <span className="text-xs text-muted-foreground">
             {assignee ? assignee.name.split(" ")[0] : "Sin asignar"}

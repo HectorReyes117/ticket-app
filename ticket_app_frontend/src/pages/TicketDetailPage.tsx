@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -11,12 +11,14 @@ import {
   FileText,
   History,
   Hourglass,
+  Loader2,
   Lock,
   Mail,
   Paperclip,
   Phone,
   Send,
   Server,
+  Upload,
   User,
   Wrench,
 } from "lucide-react";
@@ -35,6 +37,8 @@ import { useSiteStore, useTicketStore, useUserStore } from "@/store";
 import { useAuth } from "@/context/auth-context";
 import { formatDateTime, formatRelativeTime, PRIORITY_META, cn } from "@/utils";
 import type { TicketStatus } from "@/types";
+import { uploadTicketAttachment } from "@/features/tickets/services/ticketService";
+import { UserAvatar } from "@/components/common/UserAvatar";
 
 const STEPS_FLOW: Array<{
   key: string;
@@ -78,8 +82,37 @@ export function TicketDetailPage() {
   const [selectedStatusForm, setSelectedStatusForm] = useState<TicketStatus>("in_progress");
   const [notifyEmail, setNotifyEmail] = useState(true);
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
+  const attachmentFileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchTicketDetails = useTicketStore((state) => state.fetchTicketDetails);
+
+  const handleUploadAttachment = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !id) return;
+
+    try {
+      setIsUploadingAttachment(true);
+      await uploadTicketAttachment(id, file);
+      toast.add({
+        title: "Archivo adjuntado",
+        description: `Se adjuntó ${file.name} a la solicitud.`,
+        type: "success",
+      });
+      await fetchTicketDetails(id);
+    } catch (err: any) {
+      toast.add({
+        title: "Error al adjuntar archivo",
+        description: err.message || "No se pudo subir el archivo.",
+        type: "danger",
+      });
+    } finally {
+      setIsUploadingAttachment(false);
+      if (attachmentFileInputRef.current) {
+        attachmentFileInputRef.current.value = "";
+      }
+    }
+  };
 
   useEffect(() => {
     if (id) {
@@ -529,13 +562,13 @@ export function TicketDetailPage() {
             </div>
 
             <div className="flex items-center gap-3.5">
-              <div className="size-12 rounded-full bg-brand-soft text-brand font-bold flex items-center justify-center text-sm shadow-xs border border-brand/20 shrink-0">
-                {(assignee?.name ?? "SN")
-                  .split(" ")
-                  .map((n) => n[0])
-                  .slice(0, 2)
-                  .join("")}
-              </div>
+              <UserAvatar
+                name={assignee?.name ?? "Sin asignar"}
+                avatarUrl={assignee?.avatarUrl}
+                color={assignee?.color || "#2563eb"}
+                presence={assignee?.presence}
+                size="lg"
+              />
               <div className="flex flex-col min-w-0">
                 <span className="text-sm font-bold text-foreground truncate">
                   {assignee?.name ?? "Sin técnico asignado"}
@@ -580,13 +613,13 @@ export function TicketDetailPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="size-11 rounded-full bg-muted flex items-center justify-center text-brand font-bold text-xs border border-border shrink-0">
-                {(requestor?.name ?? "SO")
-                  .split(" ")
-                  .map((n) => n[0])
-                  .slice(0, 2)
-                  .join("")}
-              </div>
+              <UserAvatar
+                name={requestor?.name ?? "Usuario Solicitante"}
+                avatarUrl={requestor?.avatarUrl}
+                color={requestor?.color || "#64748b"}
+                presence={requestor?.presence}
+                size="md"
+              />
               <div className="flex flex-col min-w-0">
                 <span className="text-xs font-bold text-foreground truncate">
                   {requestor?.name ?? "Usuario Solicitante"}
@@ -667,55 +700,101 @@ export function TicketDetailPage() {
 
           {/* Panel 4: Attachments and Files */}
           <div className="bg-card rounded-2xl p-5 shadow-xs border border-border flex flex-col gap-3">
+            <input
+              type="file"
+              ref={attachmentFileInputRef}
+              onChange={handleUploadAttachment}
+              className="hidden"
+            />
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Archivos & Evidencias ({ticket.attachments.length || 2})
+                Archivos & Evidencias ({ticket.attachments.length})
               </span>
               <button
                 type="button"
-                onClick={() =>
-                  toast.add({
-                    title: "Subir archivo",
-                    description: "Arrastra archivos a la solicitud para adjuntarlos.",
-                    type: "info",
-                  })
-                }
-                className="text-brand text-xs font-bold hover:underline flex items-center gap-0.5"
+                disabled={isUploadingAttachment}
+                onClick={() => attachmentFileInputRef.current?.click()}
+                className="text-brand text-xs font-bold hover:underline flex items-center gap-1 disabled:opacity-50 cursor-pointer"
               >
-                <span>Subir</span>
+                {isUploadingAttachment ? (
+                  <>
+                    <Loader2 className="size-3 animate-spin" />
+                    <span>Subiendo...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="size-3" />
+                    <span>Subir</span>
+                  </>
+                )}
               </button>
             </div>
 
             <div className="flex flex-col gap-2">
-              <div className="p-2.5 bg-muted/60 rounded-xl flex items-center justify-between border border-border/40 hover:bg-muted transition-colors">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="size-8 rounded-lg bg-card text-brand flex items-center justify-center shrink-0 border border-border">
-                    <FileText className="size-4" />
-                  </div>
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-xs font-semibold text-foreground truncate">
-                      reporte_diagnostico_inicial.pdf
-                    </span>
-                    <span className="text-[11px] text-muted-foreground">1.8 MB • Subido hoy</span>
-                  </div>
-                </div>
-                <Download className="size-4 text-muted-foreground hover:text-brand cursor-pointer" />
-              </div>
+              {ticket.attachments.length > 0 ? (
+                ticket.attachments.map((file) => {
+                  const isImage = file.mimeType?.startsWith("image/") || /\.(png|jpe?g|webp|gif)$/i.test(file.name);
+                  const sizeFormatted = file.size
+                    ? `${(file.size / (1024 * 1024)).toFixed(2)} MB`
+                    : "Archivo adjunto";
+                  const downloadUrl = file.fileUrl
+                    ? file.fileUrl.startsWith("http")
+                      ? file.fileUrl
+                      : `http://localhost:5214${file.fileUrl}`
+                    : undefined;
 
-              <div className="p-2.5 bg-muted/60 rounded-xl flex items-center justify-between border border-border/40 hover:bg-muted transition-colors">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="size-8 rounded-lg bg-card text-brand flex items-center justify-center shrink-0 border border-border">
-                    <Paperclip className="size-4" />
-                  </div>
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-xs font-semibold text-foreground truncate">
-                      captura_error_puerto.png
-                    </span>
-                    <span className="text-[11px] text-muted-foreground">420 KB • Verificado</span>
-                  </div>
+                  return (
+                    <div
+                      key={file.id}
+                      className="p-2.5 bg-muted/60 rounded-xl flex items-center justify-between border border-border/40 hover:bg-muted transition-colors"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="size-8 rounded-lg bg-card text-brand flex items-center justify-center shrink-0 border border-border">
+                          {isImage ? <Paperclip className="size-4" /> : <FileText className="size-4" />}
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-xs font-semibold text-foreground truncate" title={file.name}>
+                            {file.name}
+                          </span>
+                          <span className="text-[11px] text-muted-foreground">
+                            {sizeFormatted} • {formatRelativeTime(file.uploadedAt)}
+                          </span>
+                        </div>
+                      </div>
+                      {downloadUrl ? (
+                        <a
+                          href={downloadUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          download={file.name}
+                          title="Descargar archivo"
+                          className="p-1.5 text-muted-foreground hover:text-brand transition-colors rounded-lg hover:bg-card"
+                        >
+                          <Download className="size-4" />
+                        </a>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            toast.add({
+                              title: "Archivo adjunto",
+                              description: file.name,
+                              type: "info",
+                            })
+                          }
+                          className="p-1.5 text-muted-foreground hover:text-brand transition-colors rounded-lg hover:bg-card"
+                        >
+                          <Download className="size-4" />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="p-4 bg-muted/30 rounded-xl text-center border border-dashed border-border/60">
+                  <p className="text-xs text-muted-foreground">No hay evidencias o archivos adjuntos en esta solicitud.</p>
                 </div>
-                <Download className="size-4 text-muted-foreground hover:text-brand cursor-pointer" />
-              </div>
+              )}
             </div>
           </div>
         </div>

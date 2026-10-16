@@ -1,6 +1,7 @@
 import { ArrowUpDown, FilterX, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ViewToggle } from "@/components/common/ViewToggle";
+import { DateRangeFilter } from "@/components/common/DateRangeFilter/DateRangeFilter";
 import { PRIORITIES, PRIORITY_META, cn } from "@/utils";
 import type { Site, TicketView, User } from "@/types";
 import {
@@ -10,6 +11,7 @@ import {
   type TicketSortKey,
 } from "../services/ticketQuery";
 import type { FilterPill } from "@/components/common/FilterPills";
+import type { DateRange } from "react-day-picker";
 
 interface TicketsToolbarProps {
   filters: TicketQueryState;
@@ -22,6 +24,8 @@ interface TicketsToolbarProps {
   sites: Site[];
   view: TicketView;
   onViewChange: (view: TicketView) => void;
+  dateRange?: DateRange;
+  onDateRangeChange?: (range: DateRange | undefined) => void;
 }
 
 export function TicketsToolbar({
@@ -35,6 +39,8 @@ export function TicketsToolbar({
   sites,
   view,
   onViewChange,
+  dateRange,
+  onDateRangeChange,
 }: TicketsToolbarProps) {
   return (
     <div className="bg-card rounded-t-2xl border-t border-x border-border shadow-xs flex flex-col overflow-hidden">
@@ -150,6 +156,15 @@ export function TicketsToolbar({
               </option>
             ))}
           </select>
+
+          {/* Filtro por Rango de Fechas */}
+          {onDateRangeChange && (
+            <DateRangeFilter
+              value={dateRange}
+              onChange={onDateRangeChange}
+              className="text-xs"
+            />
+          )}
 
           {/* Ordenar por */}
           <div className="flex items-center gap-1.5 pl-1 border-l border-border">

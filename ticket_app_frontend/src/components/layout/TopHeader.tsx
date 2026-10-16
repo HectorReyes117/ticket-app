@@ -18,6 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { UserAvatar } from "@/components/common/UserAvatar/UserAvatar";
 import { toast } from "@/components/ui/toast";
 import { useAuth } from "@/context/auth-context";
 
@@ -66,15 +67,6 @@ export function TopHeader() {
       type: "info",
     });
   };
-
-  const initials = user?.name
-    ? user.name
-        .split(" ")
-        .map((p) => p[0])
-        .slice(0, 2)
-        .join("")
-        .toUpperCase()
-    : "CM";
 
   return (
     <header className="sticky top-0 z-20 flex h-16 w-full items-center justify-between border-b border-border bg-card/85 px-6 backdrop-blur-md shadow-xs">
@@ -139,12 +131,13 @@ export function TopHeader() {
         <DropdownMenu>
           <DropdownMenuTrigger className="outline-none focus:ring-2 focus:ring-brand rounded-full cursor-pointer">
             <div className="flex items-center gap-2 pl-1 group">
-              <div
-                className="size-9 rounded-full ring-2 ring-brand/40 group-hover:ring-brand flex items-center justify-center font-bold text-xs text-white shadow-xs transition-all overflow-hidden"
-                style={{ backgroundColor: user?.color || "#2563eb" }}
-              >
-                {initials}
-              </div>
+              <UserAvatar
+                name={user?.name || "Carlos Mendoza"}
+                avatarUrl={user?.avatarUrl}
+                presence={user?.presence}
+                size="md"
+                className="ring-2 ring-brand/40 group-hover:ring-brand transition-all cursor-pointer"
+              />
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56 mt-1.5">
@@ -160,13 +153,15 @@ export function TopHeader() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="text-xs cursor-pointer gap-2"
-              onClick={() => navigate("/users")}
-            >
-              <User className="size-3.5 text-muted-foreground" />
-              <span>Mi Directorio &amp; Perfil</span>
-            </DropdownMenuItem>
+            {(user?.role === "admin" || user?.role === "director") && (
+              <DropdownMenuItem
+                className="text-xs cursor-pointer gap-2"
+                onClick={() => navigate("/users")}
+              >
+                <User className="size-3.5 text-muted-foreground" />
+                <span>Directorio de Usuarios</span>
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem
               className="text-xs cursor-pointer gap-2"
               onClick={() =>

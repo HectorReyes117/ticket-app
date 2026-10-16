@@ -58,6 +58,7 @@ export function mapBackendDtoToUser(dto: BackendUserDto): User {
     extension: dto.extension ? `Ext. ${dto.extension}` : "",
     employeeCode: dto.employeeCode || `#EMP-${dto.id}`,
     queues: ["Soporte General"],
+    avatarUrl: dto.avatarUrl,
   };
 }
 
@@ -69,6 +70,13 @@ export interface PagedResult<T> {
   totalPages: number;
   hasPreviousPage: boolean;
   hasNextPage: boolean;
+}
+
+export async function uploadAvatar(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await api.post<string>("/users/avatar", formData);
+  return res;
 }
 
 export async function listUsers(params?: {
@@ -126,6 +134,7 @@ export async function createUser(draft: UserDraft): Promise<User> {
     extension: draft.extension,
     locationId: draft.siteId ? parseInt(draft.siteId, 10) : 1,
     departmentId: 1, // Default general department
+    avatarUrl: draft.avatarUrl,
   };
 
   const created = await api.post<BackendUserDto>("/users", payload);
@@ -148,6 +157,7 @@ export async function updateUser(id: string | number, draft: Partial<UserDraft &
     extension: draft.extension,
     locationId: draft.siteId ? parseInt(draft.siteId, 10) : undefined,
     isActive: draft.active,
+    avatarUrl: draft.avatarUrl,
   };
 
   if (draft.role) {

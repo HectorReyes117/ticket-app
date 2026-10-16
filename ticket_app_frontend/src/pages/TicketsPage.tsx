@@ -85,6 +85,7 @@ export function TicketsPage() {
         tickets={tickets}
         showQuickFilters
         createdRange={range}
+        onDateRangeChange={setRange}
       />
 
       <TicketsDistributionChart tickets={tickets} />

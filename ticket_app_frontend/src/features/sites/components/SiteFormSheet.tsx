@@ -74,10 +74,18 @@ export function SiteFormSheet({ open, onOpenChange, siteToEdit }: SiteFormSheetP
   const createSite = useSiteStore((state) => state.createSite);
   const updateSite = useSiteStore((state) => state.updateSite);
   const users = useUserStore((state) => state.items);
+  const fetchUsers = useUserStore((state) => state.fetchUsers);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [newAreaInput, setNewAreaInput] = useState("");
   const [showAddAreaInput, setShowAddAreaInput] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
+
+  // Fetch users if not loaded yet
+  useEffect(() => {
+    if (open && users.length === 0) {
+      fetchUsers({ pageSize: 100, activeOnly: true });
+    }
+  }, [open, users.length, fetchUsers]);
 
   // Reset or populate form whenever sheet is opened
   useEffect(() => {
@@ -499,6 +507,7 @@ export function SiteFormSheet({ open, onOpenChange, siteToEdit }: SiteFormSheetP
                   onChange={(e) => setField("custodianId", e.target.value)}
                   className="w-full bg-muted/60 text-foreground text-xs font-medium rounded-xl p-3 border border-border focus:ring-1 focus:ring-brand"
                 >
+                  <option value="">-- Seleccionar encargado o custodio --</option>
                   {custodians.map((u) => (
                     <option key={u.id} value={u.id}>
                       {u.name} — {u.role} ({u.email})

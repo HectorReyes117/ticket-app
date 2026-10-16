@@ -138,6 +138,7 @@ export function mapBackendTicketToFrontend(dto: BackendTicketDto): Ticket {
       mimeType: a.mimeType,
       uploadedAt: a.uploadedAt,
       uploadedById: String(a.uploadedById),
+      fileUrl: a.fileUrl,
     })),
     activities: (dto.activities || []).map((act) => ({
       id: String(act.id),
@@ -321,5 +322,6 @@ export async function uploadTicketAttachment(
     mimeType: res.mimeType,
     uploadedAt: res.uploadedAt,
     uploadedById: String(res.uploadedById),
+    fileUrl: res.fileUrl,
   };
 }

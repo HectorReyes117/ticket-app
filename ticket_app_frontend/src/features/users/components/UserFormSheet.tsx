@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   Building2,
   Check,
   KeyRound,
+  Loader2,
   Mail,
   Phone,
   Plus,
@@ -24,6 +25,8 @@ import { useSiteStore, useUserStore } from "@/store";
 import { validateEmail, validatePhone } from "@/utils";
 import { cn } from "@/utils";
 import type { Role, User as UserType } from "@/types";
+import { useAuth } from "@/context/auth-context";
+import { uploadAvatar } from "../services/userService";
 
 interface UserFormSheetProps {
   open: boolean;
@@ -43,6 +46,7 @@ interface FormState {
   role: Role;
   queues: string[];
   generatePasswordLink: boolean;
+  avatarUrl?: string;
 }
 
 const emptyForm: FormState = {
@@ -57,6 +61,7 @@ const emptyForm: FormState = {
   role: "technician",
   queues: ["Hardware & Servidores", "Redes L2"],
   generatePasswordLink: true,
+  avatarUrl: undefined,
 };
 
 const DEPARTMENTS = [
@@ -71,6 +76,7 @@ const DEPARTMENTS = [
 ];
 
 export function UserFormSheet({ open, onOpenChange, userToEdit }: UserFormSheetProps) {
+  const { user: currentUser, updateUserSession } = useAuth();
   const sites = useSiteStore((state) => state.items);
   const createUser = useUserStore((state) => state.createUser);
   const updateUser = useUserStore((state) => state.updateUser);
@@ -80,6 +86,8 @@ export function UserFormSheet({ open, onOpenChange, userToEdit }: UserFormSheetP
   const [newQueueInput, setNewQueueInput] = useState("");
   const [showAddQueue, setShowAddQueue] = useState(false);
   const [wasOpen, setWasOpen] = useState(open);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (open !== wasOpen) {
     setWasOpen(open);
@@ -97,12 +105,14 @@ export function UserFormSheet({ open, onOpenChange, userToEdit }: UserFormSheetP
           role: userToEdit.role,
           queues: userToEdit.queues || ["Hardware & Servidores"],
           generatePasswordLink: true,
+          avatarUrl: userToEdit.avatarUrl,
         });
       } else {
         setForm({
           ...emptyForm,
           employeeCode: `#EMP-${Math.floor(1000 + Math.random() * 9000)}`,
           siteId: sites[0]?.id || "",
+          avatarUrl: undefined,
         });
       }
       setErrors({});
@@ -141,6 +151,42 @@ export function UserFormSheet({ open, onOpenChange, userToEdit }: UserFormSheetP
         .toUpperCase()
     : "NP";
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.add({
+        title: "Archivo inválido",
+        description: "Por favor selecciona un archivo de imagen válido (PNG, JPG, WEBP).",
+        type: "danger",
+      });
+      return;
+    }
+
+    try {
+      setIsUploadingAvatar(true);
+      const url = await uploadAvatar(file);
+      setField("avatarUrl", url);
+      toast.add({
+        title: "Fotografía cargada",
+        description: "La fotografía de perfil se ha procesado correctamente.",
+        type: "success",
+      });
+    } catch (err: any) {
+      toast.add({
+        title: "Error al subir fotografía",
+        description: err.message || "No se pudo subir la imagen al servidor.",
+        type: "danger",
+      });
+    } finally {
+      setIsUploadingAvatar(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
   const submit = async () => {
     const nextErrors: Partial<Record<keyof FormState, string>> = {};
     if (!form.name.trim()) nextErrors.name = "El nombre completo es obligatorio.";
@@ -155,7 +201,7 @@ export function UserFormSheet({ open, onOpenChange, userToEdit }: UserFormSheetP
 
     try {
       if (userToEdit) {
-        await updateUser(userToEdit.id, {
+        const payload = {
           name: form.name,
           email: form.email,
           phone: form.phone,
@@ -164,7 +210,12 @@ export function UserFormSheet({ open, onOpenChange, userToEdit }: UserFormSheetP
           department: form.department,
           title: form.title,
           extension: form.extension,
-        });
+          avatarUrl: form.avatarUrl,
+        };
+        await updateUser(userToEdit.id, payload);
+        if (currentUser && currentUser.id === userToEdit.id) {
+          updateUserSession(payload);
+        }
         toast.add({
           title: "Usuario actualizado",
           description: `Los datos de ${form.name} se han guardado con éxito.`,
@@ -182,6 +233,7 @@ export function UserFormSheet({ open, onOpenChange, userToEdit }: UserFormSheetP
           extension: form.extension || "Ext. 4010",
           employeeCode: form.employeeCode,
           queues: form.queues,
+          avatarUrl: form.avatarUrl,
         });
         toast.add({
           title: "Usuario creado y enrolado",
@@ -254,8 +306,27 @@ export function UserFormSheet({ open, onOpenChange, userToEdit }: UserFormSheetP
 
             {/* Avatar Preview & Upload Box */}
             <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/40 border border-border">
-              <div className="size-14 rounded-full bg-brand text-white flex items-center justify-center font-bold text-base shadow-sm shrink-0">
-                {initials}
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleAvatarUpload}
+                accept="image/png,image/jpeg,image/webp"
+                className="hidden"
+              />
+              <div
+                onClick={() => !isUploadingAvatar && fileInputRef.current?.click()}
+                className="size-14 rounded-full bg-brand text-white flex items-center justify-center font-bold text-base shadow-sm shrink-0 overflow-hidden cursor-pointer hover:opacity-90 transition-opacity border-2 border-border"
+                title="Haz clic para cambiar imagen"
+              >
+                {form.avatarUrl ? (
+                  <img
+                    src={form.avatarUrl.startsWith("http") ? form.avatarUrl : `http://localhost:5214${form.avatarUrl}`}
+                    alt={form.name || "Avatar"}
+                    className="size-full object-cover"
+                  />
+                ) : (
+                  initials
+                )}
               </div>
               <div className="flex flex-col gap-1 min-w-0">
                 <span className="text-xs font-bold text-foreground">Fotografía de Perfil</span>
@@ -265,19 +336,33 @@ export function UserFormSheet({ open, onOpenChange, userToEdit }: UserFormSheetP
                 <div className="flex items-center gap-2 mt-1">
                   <button
                     type="button"
-                    onClick={() =>
-                      toast.add({
-                        title: "Cargar imagen",
-                        description: "Selecciona un archivo de imagen en formato PNG o JPG.",
-                        type: "info",
-                      })
-                    }
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-card text-foreground text-xs font-semibold border border-border shadow-xs hover:bg-muted transition-colors"
+                    disabled={isUploadingAvatar}
+                    onClick={() => fileInputRef.current?.click()}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-card text-foreground text-xs font-semibold border border-border shadow-xs hover:bg-muted transition-colors disabled:opacity-50"
                   >
-                    <Upload className="size-3.5 text-muted-foreground" />
-                    <span>Subir Fotografía</span>
+                    {isUploadingAvatar ? (
+                      <>
+                        <Loader2 className="size-3.5 text-muted-foreground animate-spin" />
+                        <span>Subiendo...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="size-3.5 text-muted-foreground" />
+                        <span>{form.avatarUrl ? "Cambiar Fotografía" : "Subir Fotografía"}</span>
+                      </>
+                    )}
                   </button>
-                  <span className="text-[11px] text-muted-foreground">Usando iniciales</span>
+                  {form.avatarUrl ? (
+                    <button
+                      type="button"
+                      onClick={() => setField("avatarUrl", undefined)}
+                      className="text-[11px] text-destructive hover:underline"
+                    >
+                      Quitar
+                    </button>
+                  ) : (
+                    <span className="text-[11px] text-muted-foreground">Usando iniciales</span>
+                  )}
                 </div>
               </div>
             </div>

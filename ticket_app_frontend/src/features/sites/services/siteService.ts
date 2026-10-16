@@ -44,6 +44,7 @@ export function mapBackendLocationToSite(dto: BackendLocationDto): Site {
     estimatedStaffCapacity: dto.estimatedStaffCapacity,
     availableFloors: dto.availableFloors,
     custodianId: dto.custodianId,
+    custodianName: dto.custodianName,
     managers: dto.custodianName ? [dto.custodianName] : ["Dirección General"],
     areas: (dto.areas || []).map((a) => a.name),
     active: dto.isActive,

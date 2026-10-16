@@ -80,4 +80,27 @@ public class UsersController : BaseApiController
         var result = await Mediator.Send(command);
         return Ok(result);
     }
+
+    [HttpPost("avatar")]
+    public async Task<ActionResult<ApiResponse<string>>> UploadAvatar(
+        [FromForm] IFormFile file,
+        [FromServices] TicketApp.Application.Common.Interfaces.IFileStorageService fileStorageService)
+    {
+        if (file == null || file.Length == 0)
+        {
+            return BadRequest(ApiResponse<string>.Fail("No se proporcionó ningún archivo de imagen válido."));
+        }
+
+        // Validate image format
+        var ext = Path.GetExtension(file.FileName).ToLower();
+        if (ext != ".jpg" && ext != ".jpeg" && ext != ".png" && ext != ".webp")
+        {
+            return BadRequest(ApiResponse<string>.Fail("Solo se admiten imágenes JPG, JPEG, PNG o WEBP."));
+        }
+
+        using var stream = file.OpenReadStream();
+        var (fileUrl, _) = await fileStorageService.SaveFileAsync(stream, file.FileName, "avatars");
+
+        return Ok(ApiResponse<string>.Ok(fileUrl, "Fotografía subida correctamente"));
+    }
 }
