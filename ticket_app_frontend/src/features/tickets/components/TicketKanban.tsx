@@ -107,7 +107,7 @@ export function TicketKanbanCard({
 
       <div className="mt-2.5 flex items-center justify-between gap-2">
         <PriorityBadge priority={ticket.priority} withLabel={false} />
-        <SlaTimer dueAt={ticket.slaDueAt} />
+        <SlaTimer dueAt={ticket.slaDueAt} status={ticket.status} />
       </div>
 
       <div className="mt-3 flex items-center justify-between gap-2 border-t border-border pt-2.5">

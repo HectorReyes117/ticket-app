@@ -133,7 +133,7 @@ export function TicketTable({
                   <StatusBadge status={ticket.status} />
                 </TableCell>
                 <TableCell>
-                  <SlaTimer dueAt={ticket.slaDueAt} />
+                  <SlaTimer dueAt={ticket.slaDueAt} status={ticket.status} />
                 </TableCell>
                 <TableCell className="text-right">
                   <span className="text-sm whitespace-nowrap text-muted-foreground">

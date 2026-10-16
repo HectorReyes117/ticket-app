@@ -47,7 +47,7 @@ export function RecentTickets({ tickets, usersById, sitesById }: RecentTicketsPr
                 <PriorityBadge priority={ticket.priority} withLabel={false} />
               </span>
               <span className="hidden shrink-0 lg:block">
-                <SlaTimer dueAt={ticket.slaDueAt} />
+                <SlaTimer dueAt={ticket.slaDueAt} status={ticket.status} />
               </span>
               <StatusBadge status={ticket.status} />
               <ChevronRight className="size-4 shrink-0 text-muted-foreground" />

@@ -37,9 +37,10 @@ import { toast } from "@/components/ui/toast";
 import { useSiteStore, useTicketStore, useUserStore } from "@/store";
 import { useAuth } from "@/context/auth-context";
 import { formatDateTime, formatRelativeTime, formatSla, parseDate, PRIORITY_META, cn } from "@/utils";
-import type { TicketStatus } from "@/types";
 import { uploadTicketAttachment } from "@/features/tickets/services/ticketService";
 import { UserAvatar } from "@/components/common/UserAvatar";
+import { getStoredToken } from "@/services/api";
+import type { TicketStatus } from "@/types";
 
 const STEPS_FLOW: Array<{
   key: string;
@@ -112,6 +113,42 @@ export function TicketDetailPage() {
       if (attachmentFileInputRef.current) {
         attachmentFileInputRef.current.value = "";
       }
+    }
+  };
+
+  const handleDownloadFile = async (url: string, fileName: string) => {
+    try {
+      const token = getStoredToken();
+      const headers: HeadersInit = {};
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(url, { headers });
+      if (!response.ok) throw new Error("Error en la descarga");
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000);
+      toast.add({
+        title: "Descarga iniciada",
+        description: `Descargando ${fileName}...`,
+        type: "success",
+      });
+    } catch (err: any) {
+      console.error("Error al descargar archivo via Blob:", err);
+      toast.add({
+        title: "Error al descargar",
+        description: err.message || "No se pudo descargar el archivo.",
+        type: "danger",
+      });
+      // Fallback
+      window.open(url, "_blank");
     }
   };
 
@@ -801,16 +838,14 @@ export function TicketDetailPage() {
                           >
                             <Eye className="size-4" />
                           </a>
-                          <a
-                            href={downloadUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            download={file.name}
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadFile(downloadUrl, file.name)}
                             title="Descargar archivo"
-                            className="p-1.5 text-muted-foreground hover:text-brand transition-colors rounded-lg hover:bg-card"
+                            className="p-1.5 text-muted-foreground hover:text-brand transition-colors rounded-lg hover:bg-card cursor-pointer"
                           >
                             <Download className="size-4" />
-                          </a>
+                          </button>
                         </div>
                       ) : (
                         <button

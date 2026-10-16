@@ -116,10 +116,11 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+// 7.1 CORS must run before StaticFiles and endpoints to enable fetch/blob downloads
+app.UseCors("AllowAll");
+
 // 8. Static Files for uploaded local documents & images
 app.UseStaticFiles();
-
-app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseAuthorization();
