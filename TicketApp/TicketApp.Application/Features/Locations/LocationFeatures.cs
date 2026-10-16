@@ -34,13 +34,15 @@ public class LocationDto
     public int ActiveTicketsCount { get; set; }
 }
 
-public class GetLocationsQuery : IRequest<ApiResponse<IReadOnlyList<LocationDto>>>
+public class GetLocationsQuery : IRequest<ApiResponse<PagedResult<LocationDto>>>
 {
     public string? Search { get; set; }
     public bool? ActiveOnly { get; set; }
+    public int PageNumber { get; set; } = 1;
+    public int PageSize { get; set; } = 50;
 }
 
-public class GetLocationsQueryHandler : IRequestHandler<GetLocationsQuery, ApiResponse<IReadOnlyList<LocationDto>>>
+public class GetLocationsQueryHandler : IRequestHandler<GetLocationsQuery, ApiResponse<PagedResult<LocationDto>>>
 {
     private readonly IUnitOfWork _unitOfWork;
 
@@ -49,7 +51,7 @@ public class GetLocationsQueryHandler : IRequestHandler<GetLocationsQuery, ApiRe
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<ApiResponse<IReadOnlyList<LocationDto>>> Handle(GetLocationsQuery request, CancellationToken cancellationToken)
+    public async Task<ApiResponse<PagedResult<LocationDto>>> Handle(GetLocationsQuery request, CancellationToken cancellationToken)
     {
         var query = _unitOfWork.Repository<Location>()
             .Query()
@@ -72,8 +74,15 @@ public class GetLocationsQueryHandler : IRequestHandler<GetLocationsQuery, ApiRe
             query = query.Where(l => l.IsActive);
         }
 
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var pageNumber = request.PageNumber <= 0 ? 1 : request.PageNumber;
+        var pageSize = request.PageSize <= 0 ? 50 : request.PageSize;
+
         var locations = await query
             .OrderBy(l => l.Name)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
             .Select(l => new LocationDto
             {
                 Id = l.Id,
@@ -99,7 +108,8 @@ public class GetLocationsQueryHandler : IRequestHandler<GetLocationsQuery, ApiRe
             })
             .ToListAsync(cancellationToken);
 
-        return ApiResponse<IReadOnlyList<LocationDto>>.Ok(locations);
+        var pagedResult = new PagedResult<LocationDto>(locations, totalCount, pageNumber, pageSize);
+        return ApiResponse<PagedResult<LocationDto>>.Ok(pagedResult);
     }
 }
 

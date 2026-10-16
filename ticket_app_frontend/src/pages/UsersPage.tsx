@@ -30,6 +30,8 @@ import type { User } from "@/types";
 
 export function UsersPage() {
   const users = useUserStore((state) => state.items);
+  const totalCount = useUserStore((state) => state.totalCount);
+  const totalPages = useUserStore((state) => state.totalPages);
   const loading = useUserStore((state) => state.loading);
   const fetchUsers = useUserStore((state) => state.fetchUsers);
   const sites = useSiteStore((state) => state.items);
@@ -50,15 +52,21 @@ export function UsersPage() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      const params: any = {};
+      const params: any = {
+        pageNumber: page,
+        pageSize: pageSize,
+      };
       if (searchQuery.trim()) params.search = searchQuery.trim();
       if (roleTab !== "all" && roleTab !== "inactive") {
         params.role = roleTab;
       }
+
       if (roleTab === "inactive") {
         params.activeOnly = false;
       } else if (statusFilter === "active") {
         params.activeOnly = true;
+      } else if (statusFilter === "busy") {
+        params.presence = "busy";
       } else if (statusFilter === "inactive") {
         params.activeOnly = false;
       }
@@ -71,7 +79,7 @@ export function UsersPage() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchQuery, roleTab, siteFilter, statusFilter, fetchUsers]);
+  }, [searchQuery, roleTab, siteFilter, statusFilter, page, pageSize, fetchUsers]);
 
   useEffect(
     () => () => {
@@ -88,24 +96,24 @@ export function UsersPage() {
   );
 
   // Counts for KPIs
-  const totalUsers = users.length;
+  const totalUsers = totalCount || users.length;
   const techniciansCount = users.filter((u) => u.role === "technician").length;
   const requestorsCount = users.filter((u) => u.role === "requestor").length;
   const adminsCount = users.filter((u) => u.role === "admin" || u.role === "director").length;
   const inactiveCount = users.filter((u) => !u.active).length;
 
-  // Pagination slice
-  const pageCount = Math.max(1, Math.ceil(users.length / pageSize));
+  // Server-side pagination mapping
+  const pageCount = Math.max(1, totalPages || Math.ceil(totalUsers / pageSize));
   const currentPage = Math.min(page, pageCount);
   const start = (currentPage - 1) * pageSize;
-  const pagedUsers = users.slice(start, start + pageSize);
-  const from = users.length === 0 ? 0 : start + 1;
-  const to = Math.min(start + pageSize, users.length);
+  const pagedUsers = users; // Already paged from backend
+  const from = totalUsers === 0 ? 0 : start + 1;
+  const to = Math.min(start + users.length, totalUsers);
 
   const handleRefresh = async () => {
     setPage(1);
     setRefreshing(true);
-    await fetchUsers();
+    await fetchUsers({ pageNumber: 1, pageSize });
     setRefreshing(false);
     toast.add({
       title: "Directorio actualizado",
@@ -635,7 +643,7 @@ export function UsersPage() {
         <TicketsTableFooter
           from={from}
           to={to}
-          total={users.length}
+          total={totalUsers}
           page={currentPage}
           pageCount={pageCount}
           pageSize={pageSize}

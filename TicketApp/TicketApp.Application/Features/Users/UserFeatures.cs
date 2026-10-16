@@ -33,15 +33,18 @@ public class UserDto
     public DateTime CreatedAt { get; set; }
 }
 
-public class GetUsersQuery : IRequest<ApiResponse<IReadOnlyList<UserDto>>>
+public class GetUsersQuery : IRequest<ApiResponse<PagedResult<UserDto>>>
 {
     public string? Search { get; set; }
     public UserRole? Role { get; set; }
+    public UserPresence? Presence { get; set; }
     public int? LocationId { get; set; }
     public bool? ActiveOnly { get; set; }
+    public int PageNumber { get; set; } = 1;
+    public int PageSize { get; set; } = 10;
 }
 
-public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, ApiResponse<IReadOnlyList<UserDto>>>
+public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, ApiResponse<PagedResult<UserDto>>>
 {
     private readonly IUnitOfWork _unitOfWork;
 
@@ -50,7 +53,7 @@ public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, ApiResponse<I
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<ApiResponse<IReadOnlyList<UserDto>>> Handle(GetUsersQuery request, CancellationToken cancellationToken)
+    public async Task<ApiResponse<PagedResult<UserDto>>> Handle(GetUsersQuery request, CancellationToken cancellationToken)
     {
         var query = _unitOfWork.Repository<User>()
             .Query()
@@ -72,14 +75,24 @@ public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, ApiResponse<I
         if (request.Role.HasValue)
             query = query.Where(u => u.Role == request.Role.Value);
 
+        if (request.Presence.HasValue)
+            query = query.Where(u => u.Presence == request.Presence.Value);
+
         if (request.LocationId.HasValue && request.LocationId.Value > 0)
             query = query.Where(u => u.LocationId == request.LocationId.Value);
 
-        if (request.ActiveOnly.HasValue && request.ActiveOnly.Value)
-            query = query.Where(u => u.IsActive);
+        if (request.ActiveOnly.HasValue)
+            query = query.Where(u => u.IsActive == request.ActiveOnly.Value);
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var pageNumber = request.PageNumber <= 0 ? 1 : request.PageNumber;
+        var pageSize = request.PageSize <= 0 ? 10 : request.PageSize;
 
         var list = await query
             .OrderBy(u => u.Name)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
             .Select(u => new UserDto
             {
                 Id = u.Id,
@@ -103,7 +116,8 @@ public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, ApiResponse<I
             })
             .ToListAsync(cancellationToken);
 
-        return ApiResponse<IReadOnlyList<UserDto>>.Ok(list);
+        var pagedResult = new PagedResult<UserDto>(list, totalCount, pageNumber, pageSize);
+        return ApiResponse<PagedResult<UserDto>>.Ok(pagedResult);
     }
 }
 

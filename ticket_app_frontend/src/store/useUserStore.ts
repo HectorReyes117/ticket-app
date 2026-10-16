@@ -9,13 +9,20 @@ import type { User, UserDraft } from "@/types";
 
 interface UserStore {
   items: User[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+  totalPages: number;
   loading: boolean;
   ready: boolean;
   fetchUsers: (params?: {
     search?: string;
     role?: string;
+    presence?: string;
     locationId?: number;
     activeOnly?: boolean;
+    pageNumber?: number;
+    pageSize?: number;
   }) => Promise<void>;
   createUser: (draft: UserDraft) => Promise<User>;
   updateUser: (id: string, draft: Partial<UserDraft & { active?: boolean }>) => Promise<User>;
@@ -24,14 +31,26 @@ interface UserStore {
 
 export const useUserStore = create<UserStore>((set, get) => ({
   items: [],
+  totalCount: 0,
+  pageNumber: 1,
+  pageSize: 10,
+  totalPages: 1,
   loading: false,
   ready: false,
 
   fetchUsers: async (params) => {
     set({ loading: true });
     try {
-      const users = await listUsers(params);
-      set({ items: users, ready: true, loading: false });
+      const res = await listUsers(params);
+      set({
+        items: res.items,
+        totalCount: res.totalCount,
+        pageNumber: res.pageNumber,
+        pageSize: res.pageSize,
+        totalPages: res.totalPages,
+        ready: true,
+        loading: false,
+      });
     } catch (err) {
       console.error("Error fetching users:", err);
       set({ loading: false });

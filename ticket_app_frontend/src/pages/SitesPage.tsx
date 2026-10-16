@@ -24,9 +24,12 @@ import { cn } from "@/utils";
 
 export function SitesPage() {
   const sites = useSiteStore((state) => state.items);
+  const totalCount = useSiteStore((state) => state.totalCount);
+  const totalPages = useSiteStore((state) => state.totalPages);
   const loading = useSiteStore((state) => state.loading);
   const fetchSites = useSiteStore((state) => state.fetchSites);
   const users = useUserStore((state) => state.items);
+
   const [sheetOpen, setSheetOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
@@ -39,7 +42,10 @@ export function SitesPage() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      const params: any = {};
+      const params: any = {
+        pageNumber: page,
+        pageSize: pageSize,
+      };
       if (searchQuery.trim()) params.search = searchQuery.trim();
       if (statusFilter === "active") params.activeOnly = true;
       if (statusFilter === "inactive") params.activeOnly = false;
@@ -47,7 +53,7 @@ export function SitesPage() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchQuery, statusFilter, fetchSites]);
+  }, [searchQuery, statusFilter, page, pageSize, fetchSites]);
 
   useEffect(
     () => () => {
@@ -68,18 +74,20 @@ export function SitesPage() {
     [sites],
   );
 
-  // Pagination calculations
-  const pageCount = Math.max(1, Math.ceil(sites.length / pageSize));
+  const totalSites = totalCount || sites.length;
+
+  // Server pagination calculations
+  const pageCount = Math.max(1, totalPages || Math.ceil(totalSites / pageSize));
   const currentPage = Math.min(page, pageCount);
   const start = (currentPage - 1) * pageSize;
-  const pagedSites = sites.slice(start, start + pageSize);
-  const from = sites.length === 0 ? 0 : start + 1;
-  const to = Math.min(start + pageSize, sites.length);
+  const pagedSites = sites; // Already paginated from backend
+  const from = totalSites === 0 ? 0 : start + 1;
+  const to = Math.min(start + sites.length, totalSites);
 
   const handleRefresh = async () => {
     setPage(1);
     setRefreshing(true);
-    await fetchSites();
+    await fetchSites({ pageNumber: 1, pageSize });
     setRefreshing(false);
     toast.add({
       title: "Sedes actualizadas",
@@ -482,7 +490,7 @@ export function SitesPage() {
         <TicketsTableFooter
           from={from}
           to={to}
-          total={sites.length}
+          total={totalSites}
           page={currentPage}
           pageCount={pageCount}
           pageSize={pageSize}

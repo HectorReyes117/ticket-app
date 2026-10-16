@@ -38,12 +38,42 @@ export function mapBackendLocationToSite(dto: BackendLocationDto): Site {
   };
 }
 
+export interface PagedResult<T> {
+  items: T[];
+  pageNumber: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+}
+
 export async function listSites(params?: {
   search?: string;
   activeOnly?: boolean;
-}): Promise<Site[]> {
-  const data = await api.get<BackendLocationDto[]>("/locations", params);
-  return (data || []).map(mapBackendLocationToSite);
+  pageNumber?: number;
+  pageSize?: number;
+}): Promise<{ items: Site[]; totalCount: number; pageNumber: number; pageSize: number; totalPages: number }> {
+  const data = await api.get<PagedResult<BackendLocationDto> | BackendLocationDto[]>("/locations", params);
+
+  if (data && "items" in data && Array.isArray(data.items)) {
+    return {
+      items: data.items.map(mapBackendLocationToSite),
+      totalCount: data.totalCount,
+      pageNumber: data.pageNumber,
+      pageSize: data.pageSize,
+      totalPages: data.totalPages,
+    };
+  }
+
+  const list = Array.isArray(data) ? data : [];
+  return {
+    items: list.map(mapBackendLocationToSite),
+    totalCount: list.length,
+    pageNumber: 1,
+    pageSize: list.length || 50,
+    totalPages: 1,
+  };
 }
 
 export async function createSite(draft: SiteDraft): Promise<Site> {

@@ -11,14 +11,24 @@ namespace TicketApp.API.Controllers;
 public class UsersController : BaseApiController
 {
     [HttpGet]
-    public async Task<ActionResult<ApiResponse<IReadOnlyList<UserDto>>>> GetUsers([FromQuery] string? search, [FromQuery] UserRole? role, [FromQuery] int? locationId, [FromQuery] bool? activeOnly)
+    public async Task<ActionResult<ApiResponse<PagedResult<UserDto>>>> GetUsers(
+        [FromQuery] string? search,
+        [FromQuery] UserRole? role,
+        [FromQuery] UserPresence? presence,
+        [FromQuery] int? locationId,
+        [FromQuery] bool? activeOnly,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10)
     {
         var result = await Mediator.Send(new GetUsersQuery
         {
             Search = search,
             Role = role,
+            Presence = presence,
             LocationId = locationId,
-            ActiveOnly = activeOnly
+            ActiveOnly = activeOnly,
+            PageNumber = pageNumber,
+            PageSize = pageSize
         });
         return Ok(result);
     }
@@ -31,12 +41,16 @@ public class UsersController : BaseApiController
     }
 
     [HttpGet("technicians")]
-    public async Task<ActionResult<ApiResponse<IReadOnlyList<UserDto>>>> GetTechnicians()
+    public async Task<ActionResult<ApiResponse<PagedResult<UserDto>>>> GetTechnicians(
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 100)
     {
         var result = await Mediator.Send(new GetUsersQuery
         {
             Role = UserRole.Technician,
-            ActiveOnly = true
+            ActiveOnly = true,
+            PageNumber = pageNumber,
+            PageSize = pageSize
         });
         return Ok(result);
     }

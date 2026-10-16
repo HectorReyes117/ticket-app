@@ -10,12 +10,18 @@ namespace TicketApp.API.Controllers;
 public class LocationsController : BaseApiController
 {
     [HttpGet]
-    public async Task<ActionResult<ApiResponse<IReadOnlyList<LocationDto>>>> GetLocations([FromQuery] string? search, [FromQuery] bool? activeOnly)
+    public async Task<ActionResult<ApiResponse<PagedResult<LocationDto>>>> GetLocations(
+        [FromQuery] string? search,
+        [FromQuery] bool? activeOnly,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 50)
     {
         var result = await Mediator.Send(new GetLocationsQuery
         {
             Search = search,
-            ActiveOnly = activeOnly
+            ActiveOnly = activeOnly,
+            PageNumber = pageNumber,
+            PageSize = pageSize
         });
         return Ok(result);
     }

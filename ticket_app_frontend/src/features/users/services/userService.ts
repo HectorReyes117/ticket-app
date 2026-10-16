@@ -61,14 +61,45 @@ export function mapBackendDtoToUser(dto: BackendUserDto): User {
   };
 }
 
+export interface PagedResult<T> {
+  items: T[];
+  pageNumber: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+}
+
 export async function listUsers(params?: {
   search?: string;
   role?: string;
+  presence?: string;
   locationId?: number;
   activeOnly?: boolean;
-}): Promise<User[]> {
-  const data = await api.get<BackendUserDto[]>("/users", params);
-  return (data || []).map(mapBackendDtoToUser);
+  pageNumber?: number;
+  pageSize?: number;
+}): Promise<{ items: User[]; totalCount: number; pageNumber: number; pageSize: number; totalPages: number }> {
+  const data = await api.get<PagedResult<BackendUserDto> | BackendUserDto[]>("/users", params);
+  
+  if (data && "items" in data && Array.isArray(data.items)) {
+    return {
+      items: data.items.map(mapBackendDtoToUser),
+      totalCount: data.totalCount,
+      pageNumber: data.pageNumber,
+      pageSize: data.pageSize,
+      totalPages: data.totalPages,
+    };
+  }
+
+  const list = Array.isArray(data) ? data : [];
+  return {
+    items: list.map(mapBackendDtoToUser),
+    totalCount: list.length,
+    pageNumber: 1,
+    pageSize: list.length || 10,
+    totalPages: 1,
+  };
 }
 
 export async function getUserById(id: string | number): Promise<User> {
@@ -133,6 +164,10 @@ export async function toggleUserActive(id: string | number, isActive?: boolean):
 }
 
 export async function getTechnicians(): Promise<User[]> {
-  const data = await api.get<BackendUserDto[]>("/users/technicians");
-  return (data || []).map(mapBackendDtoToUser);
+  const data = await api.get<PagedResult<BackendUserDto> | BackendUserDto[]>("/users/technicians", { pageSize: 100 });
+  if (data && "items" in data && Array.isArray(data.items)) {
+    return data.items.map(mapBackendDtoToUser);
+  }
+  const list = Array.isArray(data) ? data : [];
+  return list.map(mapBackendDtoToUser);
 }
