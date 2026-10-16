@@ -19,11 +19,13 @@ import {
 } from "@/components/ui/sheet";
 import { toast } from "@/components/ui/toast";
 import { useSiteStore, useUserStore } from "@/store";
+import type { Site } from "@/types";
 import { cn } from "@/utils";
 
 interface SiteFormSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  siteToEdit?: Site | null;
 }
 
 type InstallationType = "campus" | "dc" | "regional" | "almacen";
@@ -60,23 +62,50 @@ const emptyForm: FormState = {
   areas: [],
 };
 
-export function SiteFormSheet({ open, onOpenChange }: SiteFormSheetProps) {
+function inferInstallationType(facilityType?: string): InstallationType {
+  const f = (facilityType || "").toLowerCase();
+  if (f.includes("datos") || f.includes("data") || f.includes("dc")) return "dc";
+  if (f.includes("sucursal") || f.includes("regional") || f.includes("edificio")) return "regional";
+  if (f.includes("almacén") || f.includes("almacen") || f.includes("taller")) return "almacen";
+  return "campus";
+}
+
+export function SiteFormSheet({ open, onOpenChange, siteToEdit }: SiteFormSheetProps) {
   const createSite = useSiteStore((state) => state.createSite);
+  const updateSite = useSiteStore((state) => state.updateSite);
   const users = useUserStore((state) => state.items);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [newAreaInput, setNewAreaInput] = useState("");
   const [showAddAreaInput, setShowAddAreaInput] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
 
-  // Reset form whenever sheet is opened
+  // Reset or populate form whenever sheet is opened
   useEffect(() => {
     if (open) {
-      setForm(emptyForm);
+      if (siteToEdit) {
+        setForm({
+          name: siteToEdit.name || "",
+          type: inferInstallationType(siteToEdit.facilityType),
+          code: siteToEdit.code || `#SED-${siteToEdit.id}`,
+          address: siteToEdit.address || "",
+          city: siteToEdit.city || "",
+          postalCode: siteToEdit.postalCode || "",
+          levels: "",
+          capacity: "",
+          custodianId: siteToEdit.custodianId ? String(siteToEdit.custodianId) : "",
+          phone: siteToEdit.phone || "",
+          extension: "",
+          securityNotes: "",
+          areas: siteToEdit.areas ? [...siteToEdit.areas] : [],
+        });
+      } else {
+        setForm(emptyForm);
+      }
       setErrors({});
       setNewAreaInput("");
       setShowAddAreaInput(false);
     }
-  }, [open]);
+  }, [open, siteToEdit]);
 
   const custodians = users.filter((u) => u.active);
 
@@ -120,26 +149,45 @@ export function SiteFormSheet({ open, onOpenChange }: SiteFormSheetProps) {
     };
 
     try {
-      await createSite({
-        name: form.name.trim(),
-        facilityType: facilityTypeMap[form.type] || "Campus Principal",
-        address: form.address.trim(),
-        city: form.city.trim(),
-        postalCode: form.postalCode.trim() || undefined,
-        phone: form.phone.trim(),
-        custodianId: form.custodianId ? parseInt(form.custodianId, 10) : undefined,
-        areas: form.areas.length > 0 ? form.areas : ["Área General"],
-      });
+      if (siteToEdit) {
+        await updateSite(siteToEdit.id, {
+          name: form.name.trim(),
+          facilityType: facilityTypeMap[form.type] || "Campus Principal",
+          address: form.address.trim(),
+          city: form.city.trim(),
+          postalCode: form.postalCode.trim() || undefined,
+          phone: form.phone.trim(),
+          custodianId: form.custodianId ? parseInt(form.custodianId, 10) : undefined,
+          areas: form.areas,
+        });
 
-      toast.add({
-        title: "Sede registrada exitosamente",
-        description: `${form.name} ha sido agregada al inventario corporativo.`,
-        type: "success",
-      });
+        toast.add({
+          title: "Sede actualizada exitosamente",
+          description: `${form.name} ha sido actualizada.`,
+          type: "success",
+        });
+      } else {
+        await createSite({
+          name: form.name.trim(),
+          facilityType: facilityTypeMap[form.type] || "Campus Principal",
+          address: form.address.trim(),
+          city: form.city.trim(),
+          postalCode: form.postalCode.trim() || undefined,
+          phone: form.phone.trim(),
+          custodianId: form.custodianId ? parseInt(form.custodianId, 10) : undefined,
+          areas: form.areas.length > 0 ? form.areas : ["Área General"],
+        });
+
+        toast.add({
+          title: "Sede registrada exitosamente",
+          description: `${form.name} ha sido agregada al inventario corporativo.`,
+          type: "success",
+        });
+      }
       onOpenChange(false);
     } catch (err: any) {
       toast.add({
-        title: "Error al registrar sede",
+        title: "Error al guardar sede",
         description: err.message || "No se pudo comunicar con el servidor.",
         type: "danger",
       });
@@ -161,10 +209,12 @@ export function SiteFormSheet({ open, onOpenChange }: SiteFormSheetProps) {
               </div>
               <div className="flex flex-col min-w-0">
                 <h2 className="text-lg font-bold text-foreground leading-tight truncate">
-                  Nueva Sede / Ubicación Física
+                  {siteToEdit ? "Editar Sede / Ubicación Física" : "Nueva Sede / Ubicación Física"}
                 </h2>
                 <p className="text-xs text-muted-foreground truncate">
-                  Registro en infraestructura TicketApp y asignación de responsables
+                  {siteToEdit
+                    ? "Actualización de infraestructura y responsables en sitio"
+                    : "Registro en infraestructura TicketApp y asignación de responsables"}
                 </p>
               </div>
             </div>

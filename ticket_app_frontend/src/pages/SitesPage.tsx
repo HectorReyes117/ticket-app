@@ -20,6 +20,7 @@ import { TicketsTableFooter } from "@/features/tickets/components/TicketsTableFo
 import { DEFAULT_PAGE_SIZE } from "@/features/tickets/services/ticketQuery";
 import { SiteFormSheet } from "@/features/sites/components/SiteFormSheet";
 import { useSiteStore, useUserStore } from "@/store";
+import type { Site } from "@/types";
 import { cn } from "@/utils";
 
 export function SitesPage() {
@@ -31,6 +32,7 @@ export function SitesPage() {
   const users = useUserStore((state) => state.items);
 
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [siteToEdit, setSiteToEdit] = useState<Site | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -160,7 +162,10 @@ export function SitesPage() {
           <Button
             type="button"
             size="sm"
-            onClick={() => setSheetOpen(true)}
+            onClick={() => {
+              setSiteToEdit(null);
+              setSheetOpen(true);
+            }}
             className="gap-2 text-xs font-semibold rounded-xl bg-brand hover:bg-brand-hover text-white shadow-xs"
           >
             <Plus className="size-4" />
@@ -473,7 +478,10 @@ export function SitesPage() {
                         <button
                           type="button"
                           title="Editar sede"
-                          onClick={() => setSheetOpen(true)}
+                          onClick={() => {
+                            setSiteToEdit(site);
+                            setSheetOpen(true);
+                          }}
                           className="p-1.5 hover:text-brand hover:bg-muted rounded-lg transition-colors"
                         >
                           <Edit className="size-4" />
@@ -501,7 +509,7 @@ export function SitesPage() {
       </div>
 
       {/* Drawer Panel CRUD for Creating/Editing Sede */}
-      <SiteFormSheet open={sheetOpen} onOpenChange={setSheetOpen} />
+      <SiteFormSheet open={sheetOpen} onOpenChange={setSheetOpen} siteToEdit={siteToEdit} />
     </div>
   );
 }

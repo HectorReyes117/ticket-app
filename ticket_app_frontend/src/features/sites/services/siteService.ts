@@ -28,10 +28,14 @@ export interface BackendLocationDto {
 export function mapBackendLocationToSite(dto: BackendLocationDto): Site {
   return {
     id: String(dto.id),
+    code: dto.code,
     name: dto.name,
+    facilityType: dto.facilityType,
     address: dto.address,
     city: dto.city,
+    postalCode: dto.postalCode,
     phone: dto.phone,
+    custodianId: dto.custodianId,
     managers: dto.custodianName ? [dto.custodianName] : ["Dirección General"],
     areas: (dto.areas || []).map((a) => a.name),
     active: dto.isActive,
@@ -91,4 +95,21 @@ export async function createSite(draft: SiteDraft): Promise<Site> {
 
   const created = await api.post<BackendLocationDto>("/locations", payload);
   return mapBackendLocationToSite(created);
+}
+
+export async function updateSite(id: string | number, draft: Partial<SiteDraft & { active?: boolean }>): Promise<Site> {
+  const payload: any = {
+    name: draft.name,
+    facilityType: draft.facilityType,
+    address: draft.address,
+    city: draft.city,
+    postalCode: draft.postalCode,
+    phone: draft.phone,
+    custodianId: draft.custodianId,
+    isActive: draft.active,
+    areas: draft.areas,
+  };
+
+  const updated = await api.put<BackendLocationDto>(`/locations/${id}`, payload);
+  return mapBackendLocationToSite(updated);
 }

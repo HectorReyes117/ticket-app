@@ -2,6 +2,7 @@ import { create } from "zustand";
 import {
   listSites,
   createSite as apiCreateSite,
+  updateSite as apiUpdateSite,
 } from "@/features/sites/services/siteService";
 import type { Site, SiteDraft } from "@/types";
 
@@ -21,6 +22,7 @@ interface SiteStore {
     pageSize?: number;
   }) => Promise<void>;
   createSite: (draft: SiteDraft) => Promise<Site>;
+  updateSite: (id: string, draft: Partial<SiteDraft & { active?: boolean }>) => Promise<Site>;
 }
 
 export const useSiteStore = create<SiteStore>((set) => ({
@@ -55,5 +57,13 @@ export const useSiteStore = create<SiteStore>((set) => ({
     const site = await apiCreateSite(draft);
     set((state) => ({ items: [...state.items, site] }));
     return site;
+  },
+
+  updateSite: async (id, draft) => {
+    const updated = await apiUpdateSite(id, draft);
+    set((state) => ({
+      items: state.items.map((s) => (s.id === id ? updated : s)),
+    }));
+    return updated;
   },
 }));

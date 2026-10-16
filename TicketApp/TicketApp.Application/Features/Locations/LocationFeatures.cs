@@ -233,6 +233,128 @@ public class CreateLocationCommandHandler : IRequestHandler<CreateLocationComman
     }
 }
 
+public class UpdateLocationCommand : IRequest<ApiResponse<LocationDto>>
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string FacilityType { get; set; } = "Campus Principal";
+    public string Address { get; set; } = string.Empty;
+    public string City { get; set; } = string.Empty;
+    public string? PostalCode { get; set; }
+    public string Phone { get; set; } = string.Empty;
+    public int? CustodianId { get; set; }
+    public bool? IsActive { get; set; }
+    public List<string>? Areas { get; set; }
+}
+
+public class UpdateLocationCommandHandler : IRequestHandler<UpdateLocationCommand, ApiResponse<LocationDto>>
+{
+    private readonly IUnitOfWork _unitOfWork;
+
+    public UpdateLocationCommandHandler(IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+    }
+
+    public async Task<ApiResponse<LocationDto>> Handle(UpdateLocationCommand request, CancellationToken cancellationToken)
+    {
+        var location = await _unitOfWork.Repository<Location>()
+            .Query()
+            .Include(l => l.Custodian)
+            .Include(l => l.Areas)
+            .FirstOrDefaultAsync(l => l.Id == request.Id, cancellationToken);
+
+        if (location == null)
+            throw new NotFoundException("Sede o Campus", request.Id);
+
+        if (!string.IsNullOrWhiteSpace(request.Name))
+            location.Name = request.Name.Trim();
+
+        if (!string.IsNullOrWhiteSpace(request.FacilityType))
+            location.FacilityType = request.FacilityType.Trim();
+
+        if (!string.IsNullOrWhiteSpace(request.Address))
+            location.Address = request.Address.Trim();
+
+        if (!string.IsNullOrWhiteSpace(request.City))
+            location.City = request.City.Trim();
+
+        if (request.PostalCode != null)
+            location.PostalCode = request.PostalCode.Trim();
+
+        if (!string.IsNullOrWhiteSpace(request.Phone))
+            location.Phone = request.Phone.Trim();
+
+        if (request.CustodianId.HasValue)
+            location.CustodianId = request.CustodianId.Value > 0 ? request.CustodianId.Value : null;
+
+        if (request.IsActive.HasValue)
+            location.IsActive = request.IsActive.Value;
+
+        if (request.Areas != null)
+        {
+            var requestedAreaNames = request.Areas
+                .Where(a => !string.IsNullOrWhiteSpace(a))
+                .Select(a => a.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            foreach (var existing in location.Areas)
+            {
+                if (!requestedAreaNames.Contains(existing.Name, StringComparer.OrdinalIgnoreCase))
+                {
+                    existing.IsActive = false;
+                }
+            }
+
+            foreach (var name in requestedAreaNames)
+            {
+                var existing = location.Areas.FirstOrDefault(a => string.Equals(a.Name, name, StringComparison.OrdinalIgnoreCase));
+                if (existing != null)
+                {
+                    existing.IsActive = true;
+                }
+                else
+                {
+                    location.Areas.Add(new LocationArea
+                    {
+                        LocationId = location.Id,
+                        Name = name,
+                        IsActive = true
+                    });
+                }
+            }
+        }
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        var dto = new LocationDto
+        {
+            Id = location.Id,
+            Code = location.Code,
+            Name = location.Name,
+            FacilityType = location.FacilityType,
+            Address = location.Address,
+            City = location.City,
+            PostalCode = location.PostalCode,
+            Phone = location.Phone,
+            CustodianId = location.CustodianId,
+            CustodianName = location.Custodian?.Name,
+            IsActive = location.IsActive,
+            Areas = location.Areas.Where(a => a.IsActive).Select(a => new LocationAreaDto
+            {
+                Id = a.Id,
+                LocationId = a.LocationId,
+                Name = a.Name,
+                FloorOrBlock = a.FloorOrBlock,
+                IsActive = a.IsActive
+            }).ToList()
+        };
+
+        return ApiResponse<LocationDto>.Ok(dto, "Sede actualizada exitosamente");
+    }
+}
+
 public class CreateLocationAreaCommand : IRequest<ApiResponse<LocationAreaDto>>
 {
     public int LocationId { get; set; }

@@ -36,6 +36,15 @@ public class LocationsController : BaseApiController
         return CreatedAtAction(nameof(GetLocations), new { id = result.Data?.Id }, result);
     }
 
+    [HttpPut("{id:int}")]
+    [Authorize(Roles = "admin")]
+    public async Task<ActionResult<ApiResponse<LocationDto>>> UpdateLocation(int id, [FromBody] UpdateLocationCommand command)
+    {
+        command.Id = id;
+        var result = await Mediator.Send(command);
+        return Ok(result);
+    }
+
     [HttpPost("{id:int}/areas")]
     [Authorize(Roles = "admin")]
     public async Task<ActionResult<ApiResponse<LocationAreaDto>>> CreateLocationArea(int id, [FromBody] CreateLocationAreaRequest request)
