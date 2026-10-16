@@ -8,6 +8,7 @@ import {
   Clock,
   Download,
   Edit3,
+  Eye,
   FileText,
   History,
   Hourglass,
@@ -35,7 +36,7 @@ import {
 import { toast } from "@/components/ui/toast";
 import { useSiteStore, useTicketStore, useUserStore } from "@/store";
 import { useAuth } from "@/context/auth-context";
-import { formatDateTime, formatRelativeTime, PRIORITY_META, cn } from "@/utils";
+import { formatDateTime, formatRelativeTime, formatSla, parseDate, PRIORITY_META, cn } from "@/utils";
 import type { TicketStatus } from "@/types";
 import { uploadTicketAttachment } from "@/features/tickets/services/ticketService";
 import { UserAvatar } from "@/components/common/UserAvatar";
@@ -587,7 +588,9 @@ export function TicketDetailPage() {
                 <span className="text-muted-foreground flex items-center gap-1.5">
                   <Phone className="size-3.5 text-muted-foreground" /> Contacto
                 </span>
-                <span className="text-foreground font-medium">+1 809 555-0199</span>
+                <span className="text-foreground font-medium">
+                  {assignee ? (assignee.phone ? `${assignee.phone}${assignee.extension ? ` (${assignee.extension})` : ""}` : "Sin teléfono registrado") : "No asignado"}
+                </span>
               </div>
             </div>
 
@@ -651,52 +654,78 @@ export function TicketDetailPage() {
           </div>
 
           {/* Panel 3: SLA & Time Tracker with Donut Visual */}
-          <div className="bg-card rounded-2xl p-5 shadow-xs border border-border flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Tiempo de Atención
-              </span>
-              <span className="px-2 py-0.5 rounded-full bg-brand-soft text-brand-soft-fg text-[11px] font-bold">
-                En Plazo Óptimo
-              </span>
-            </div>
+          {(() => {
+            const createdMs = parseDate(ticket.createdAt).getTime();
+            const dueMs = parseDate(ticket.slaDueAt).getTime();
+            const nowMs = Date.now();
+            const totalSlaMs = Math.max(1, dueMs - createdMs);
+            const elapsedMs = Math.max(0, nowMs - createdMs);
+            const slaPercent = Math.min(100, Math.max(0, Math.round((elapsedMs / totalSlaMs) * 100)));
+            const slaInfo = formatSla(ticket.slaDueAt);
 
-            <div className="flex items-center gap-4">
-              <div className="relative size-20 shrink-0">
-                <svg className="size-full transform -rotate-90" viewBox="0 0 36 36">
-                  <path
-                    className="text-muted stroke-current"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    fill="none"
-                    strokeWidth="3.5"
-                  />
-                  <path
-                    className="text-brand stroke-current"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    fill="none"
-                    strokeDasharray="72, 100"
-                    strokeLinecap="round"
-                    strokeWidth="3.5"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-xs font-bold text-foreground">72%</span>
+            return (
+              <div className="bg-card rounded-2xl p-5 shadow-xs border border-border flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Tiempo de Atención
+                  </span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                      slaInfo.overdue
+                        ? "bg-rose-500/10 text-rose-500"
+                        : slaPercent > 80
+                        ? "bg-amber-500/10 text-amber-500"
+                        : "bg-brand-soft text-brand-soft-fg"
+                    }`}
+                  >
+                    {slaInfo.overdue ? "Vencido" : slaPercent > 80 ? "Por Vencer" : "En Plazo Óptimo"}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <div className="relative size-20 shrink-0">
+                    <svg className="size-full transform -rotate-90" viewBox="0 0 36 36">
+                      <path
+                        className="text-muted stroke-current"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        fill="none"
+                        strokeWidth="3.5"
+                      />
+                      <path
+                        className={`${
+                          slaInfo.overdue
+                            ? "text-rose-500"
+                            : slaPercent > 80
+                            ? "text-amber-500"
+                            : "text-brand"
+                        } stroke-current`}
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        fill="none"
+                        strokeDasharray={`${slaPercent}, 100`}
+                        strokeLinecap="round"
+                        strokeWidth="3.5"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-xs font-bold text-foreground">{slaPercent}%</span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-lg font-bold tracking-tight text-foreground">
+                      {formatRelativeTime(ticket.createdAt)}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground">
+                      Tiempo transcurrido desde apertura
+                    </span>
+                    <span className="text-[11px] text-brand font-medium mt-0.5">
+                      Límite SLA: {formatDateTime(ticket.slaDueAt)}
+                    </span>
+                  </div>
                 </div>
               </div>
-
-              <div className="flex flex-col min-w-0">
-                <span className="text-lg font-bold tracking-tight text-foreground">
-                  {formatRelativeTime(ticket.createdAt)}
-                </span>
-                <span className="text-[11px] text-muted-foreground">
-                  Tiempo transcurrido desde apertura
-                </span>
-                <span className="text-[11px] text-brand font-medium mt-0.5">
-                  Límite SLA: {formatDateTime(ticket.slaDueAt)}
-                </span>
-              </div>
-            </div>
-          </div>
+            );
+          })()}
 
           {/* Panel 4: Attachments and Files */}
           <div className="bg-card rounded-2xl p-5 shadow-xs border border-border flex flex-col gap-3">
@@ -762,16 +791,27 @@ export function TicketDetailPage() {
                         </div>
                       </div>
                       {downloadUrl ? (
-                        <a
-                          href={downloadUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          download={file.name}
-                          title="Descargar archivo"
-                          className="p-1.5 text-muted-foreground hover:text-brand transition-colors rounded-lg hover:bg-card"
-                        >
-                          <Download className="size-4" />
-                        </a>
+                        <div className="flex items-center gap-1">
+                          <a
+                            href={downloadUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Ver documento / imagen"
+                            className="p-1.5 text-muted-foreground hover:text-brand transition-colors rounded-lg hover:bg-card"
+                          >
+                            <Eye className="size-4" />
+                          </a>
+                          <a
+                            href={downloadUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            download={file.name}
+                            title="Descargar archivo"
+                            className="p-1.5 text-muted-foreground hover:text-brand transition-colors rounded-lg hover:bg-card"
+                          >
+                            <Download className="size-4" />
+                          </a>
+                        </div>
                       ) : (
                         <button
                           type="button"

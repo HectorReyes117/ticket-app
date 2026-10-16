@@ -47,7 +47,31 @@ export const useTicketStore = create<TicketStore>((set, get) => ({
     set({ loading: true });
     try {
       const tickets = await fetchTickets(params);
-      set({ items: tickets, ready: true, loading: false });
+      set((state) => {
+        // Build a map of existing detailed tickets in state to preserve activities/attachments/details
+        const existingMap = new Map(state.items.map((t) => [t.id, t]));
+        const merged = tickets.map((incoming) => {
+          const existing = existingMap.get(incoming.id);
+          // If we already loaded full details (has description or attachments or activities)
+          if (existing && (existing.description || existing.attachments.length > 0 || existing.activities.length > 0)) {
+            return {
+              ...incoming,
+              description: existing.description || incoming.description,
+              subcategory: existing.subcategory || incoming.subcategory,
+              resolution: existing.resolution ?? incoming.resolution,
+              attachments: existing.attachments,
+              activities: existing.activities,
+            };
+          }
+          return incoming;
+        });
+
+        // Also keep any tickets that might be in state but not in the paged summary list
+        const incomingIds = new Set(tickets.map((t) => t.id));
+        const extraTickets = state.items.filter((t) => !incomingIds.has(t.id));
+
+        return { items: [...merged, ...extraTickets], ready: true, loading: false };
+      });
     } catch (err) {
       console.error("Error fetching tickets:", err);
       set({ loading: false });

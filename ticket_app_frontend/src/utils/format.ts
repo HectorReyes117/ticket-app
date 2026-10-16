@@ -12,11 +12,25 @@ export function formatTicketId(sequence: number): string {
   return `${TICKET_ID_PREFIX}-${String(sequence).padStart(5, "0")}`;
 }
 
+export function parseDate(value: string | number | Date): Date {
+  if (value instanceof Date) return value;
+  if (typeof value === "number") return new Date(value);
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    // If it's an ISO format without timezone offset (e.g. 2026-10-15T23:30:00), append Z so it's treated as UTC
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(trimmed)) {
+      return new Date(`${trimmed}Z`);
+    }
+    return new Date(trimmed);
+  }
+  return new Date();
+}
+
 export function formatDate(
   value: string | number | Date,
   options?: Intl.DateTimeFormatOptions,
 ): string {
-  return esDateTime({ hour12: false, ...options }).format(new Date(value));
+  return esDateTime({ hour12: false, ...options }).format(parseDate(value));
 }
 
 export function formatDateTime(
@@ -26,13 +40,13 @@ export function formatDateTime(
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
-  }).format(new Date(value));
+  }).format(parseDate(value));
 }
 
 const rtf = new Intl.RelativeTimeFormat("es", { numeric: "auto" });
 
 export function formatRelativeTime(value: string | number | Date): string {
-  const diffMs = new Date(value).getTime() - Date.now();
+  const diffMs = parseDate(value).getTime() - Date.now();
   const absSeconds = Math.abs(Math.round(diffMs / 1000));
 
   if (absSeconds < 60) return "hace un momento";
@@ -55,7 +69,7 @@ export interface SlaResult {
 }
 
 export function formatSla(dueAt: string | number | Date): SlaResult {
-  const diffMs = new Date(dueAt).getTime() - Date.now();
+  const diffMs = parseDate(dueAt).getTime() - Date.now();
   const overdue = diffMs < 0;
   const totalMinutes = Math.abs(Math.round(diffMs / 60000));
   const hoursLeft = Math.floor(totalMinutes / 60);
