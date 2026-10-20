@@ -136,8 +136,8 @@ using (var scope = app.Services.CreateScope())
         var context = services.GetRequiredService<ApplicationDbContext>();
         var hasher = services.GetRequiredService<IPasswordHasher>();
 
-        // Ensure database is created and apply migrations
-        await context.Database.EnsureCreatedAsync();
+        // Apply EF migrations automatically for PostgreSQL (Supabase)
+        await context.Database.MigrateAsync();
 
         // Run seed
         await ApplicationDbContextSeed.SeedAsync(context, hasher);
