@@ -146,11 +146,6 @@ export function LoginForm() {
           </Button>
         </form>
       </div>
-
-      <p className="mt-4 rounded-xl border border-border bg-card/60 px-4 py-3 text-center text-xs text-muted-foreground">
-        Demo: <span className="font-medium text-foreground">ana.rodriguez@unicaribe.edu.do</span> ·
-        contraseña <span className="font-medium text-foreground">1234</span>
-      </p>
     </div>
   );
 }
