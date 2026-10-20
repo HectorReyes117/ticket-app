@@ -14,8 +14,9 @@ public static class InfrastructureServiceRegistration
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
     {
         // Supabase / PostgreSQL Connection String
-        // Prioritize SUPABASE_DB environment variable, then fallback to ConnectionStrings:DefaultConnection
-        var connectionString = Environment.GetEnvironmentVariable("SUPABASE_DB")
+        // Checks EnvironmentVariableTarget.Process (Docker/Linux containers), EnvironmentVariableTarget.Machine (Windows host), configuration, or fallback
+        var connectionString = Environment.GetEnvironmentVariable("SUPABASE_DB", EnvironmentVariableTarget.Process)
+            ?? Environment.GetEnvironmentVariable("SUPABASE_DB", EnvironmentVariableTarget.Machine)
             ?? configuration["SUPABASE_DB"]
             ?? configuration.GetConnectionString("DefaultConnection")
             ?? "Host=localhost;Database=ticketapp;Username=postgres;Password=postgres";
