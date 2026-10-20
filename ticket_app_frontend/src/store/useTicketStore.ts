@@ -27,7 +27,7 @@ interface TicketStore {
     actorId?: string,
     message?: string,
   ) => Promise<void>;
-  assignTicket: (id: string, assigneeId: string, actorId?: string) => Promise<void>;
+  assignTicket: (id: string, assigneeId?: string | null, actorId?: string) => Promise<void>;
   addNote: (
     id: string,
     authorId: string,

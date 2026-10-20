@@ -14,7 +14,7 @@ namespace TicketApp.Application.Features.Tickets.Commands.AssignTicket;
 public class AssignTicketCommand : IRequest<ApiResponse<TicketDto>>
 {
     public int TicketId { get; set; }
-    public int AssigneeId { get; set; }
+    public int? AssigneeId { get; set; }
 }
 
 public class AssignTicketValidation : AbstractValidator<AssignTicketCommand>
@@ -22,7 +22,10 @@ public class AssignTicketValidation : AbstractValidator<AssignTicketCommand>
     public AssignTicketValidation()
     {
         RuleFor(x => x.TicketId).GreaterThan(0).WithMessage("ID de ticket inválido.");
-        RuleFor(x => x.AssigneeId).GreaterThan(0).WithMessage("ID de técnico o especialista asignado inválido.");
+        RuleFor(x => x.AssigneeId)
+            .GreaterThan(0)
+            .When(x => x.AssigneeId.HasValue)
+            .WithMessage("ID de técnico o especialista asignado inválido.");
     }
 }
 
@@ -52,13 +55,29 @@ public class AssignTicketCommandHandler : IRequestHandler<AssignTicketCommand, A
         if (ticket == null)
             throw new NotFoundException("Ticket", request.TicketId);
 
-        var newAssignee = await _unitOfWork.Repository<User>().GetByIdAsync(request.AssigneeId, cancellationToken);
-        if (newAssignee == null)
-            throw new NotFoundException("Usuario técnico", request.AssigneeId);
-
         var oldAssigneeName = ticket.Assignee?.Name ?? "Sin asignar";
-        ticket.AssigneeId = request.AssigneeId;
-        ticket.Assignee = newAssignee;
+        string newAssigneeName;
+        string activityMessage;
+
+        if (request.AssigneeId.HasValue && request.AssigneeId.Value > 0)
+        {
+            var newAssignee = await _unitOfWork.Repository<User>().GetByIdAsync(request.AssigneeId.Value, cancellationToken);
+            if (newAssignee == null)
+                throw new NotFoundException("Usuario técnico", request.AssigneeId.Value);
+
+            ticket.AssigneeId = request.AssigneeId.Value;
+            ticket.Assignee = newAssignee;
+            newAssigneeName = newAssignee.Name;
+            activityMessage = $"Solicitud asignada a '{newAssignee.Name}'.";
+        }
+        else
+        {
+            ticket.AssigneeId = null;
+            ticket.Assignee = null;
+            newAssigneeName = "Sin asignar";
+            activityMessage = "Solicitud desasignada (marcada como sin asignar).";
+        }
+
         ticket.UpdatedAt = DateTime.UtcNow;
 
         var authorId = _currentUserService.UserId ?? 1;
@@ -69,8 +88,8 @@ public class AssignTicketCommandHandler : IRequestHandler<AssignTicketCommand, A
             AuthorId = authorId,
             ActivityType = ActivityType.Assignment,
             PreviousValue = oldAssigneeName,
-            NewValue = newAssignee.Name,
-            Message = $"Solicitud asignada a '{newAssignee.Name}'.",
+            NewValue = newAssigneeName,
+            Message = activityMessage,
             IsPublic = true,
             CreatedAt = DateTime.UtcNow
         };
@@ -78,7 +97,7 @@ public class AssignTicketCommandHandler : IRequestHandler<AssignTicketCommand, A
         await _unitOfWork.Repository<TicketActivity>().AddAsync(assignActivity, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return ApiResponse<TicketDto>.Ok(MapToDto(ticket), "Técnico responsable asignado exitosamente");
+        return ApiResponse<TicketDto>.Ok(MapToDto(ticket), "Asignación actualizada exitosamente");
     }
 
     private static TicketDto MapToDto(Ticket t) => new()

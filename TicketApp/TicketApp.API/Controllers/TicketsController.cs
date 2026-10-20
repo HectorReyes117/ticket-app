@@ -113,7 +113,7 @@ public class UpdateStatusRequest
 
 public class AssignTicketRequest
 {
-    public int AssigneeId { get; set; }
+    public int? AssigneeId { get; set; }
 }
 
 public class AddActivityRequest

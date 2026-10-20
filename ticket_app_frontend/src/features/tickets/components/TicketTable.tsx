@@ -53,21 +53,24 @@ function AssigneeDropdown({
 
   const assignee = ticket.assigneeId ? usersById[ticket.assigneeId] : undefined;
 
-  const handleAssign = async (techId: string, e: React.MouseEvent) => {
+  const handleAssign = async (techId: string | null, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (loading || techId === ticket.assigneeId) return;
+    if (loading) return;
+    if (techId === ticket.assigneeId || (!techId && !ticket.assigneeId)) return;
 
     try {
       setLoading(true);
       await assignTicket(ticket.id, techId, user?.id ?? "system");
       toast.add({
-        title: "Técnico asignado",
-        description: `Se asignó a ${usersById[techId]?.name ?? "técnico"}.`,
+        title: techId ? "Técnico asignado" : "Ticket desasignado",
+        description: techId
+          ? `Se asignó a ${usersById[techId]?.name ?? "técnico"}.`
+          : "El ticket quedó marcado como sin asignar.",
         type: "success",
       });
     } catch {
       toast.add({
-        title: "Error al asignar",
+        title: "Error al actualizar asignación",
         description: "No se pudo actualizar la asignación del ticket.",
         type: "error",
       });
@@ -114,6 +117,23 @@ function AssigneeDropdown({
           <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
             Asignar especialista
           </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+
+          <DropdownMenuItem
+            onClick={(e) => handleAssign(null, e)}
+            className="flex items-center justify-between gap-2 py-1.5 cursor-pointer text-muted-foreground hover:text-foreground"
+          >
+            <span className="flex items-center gap-2">
+              <span className="size-6 rounded-full border border-dashed border-border flex items-center justify-center text-xs">
+                ∅
+              </span>
+              <span className="text-sm font-medium">Sin asignar</span>
+            </span>
+            {!ticket.assigneeId ? (
+              <Check className="size-4 shrink-0 text-brand" />
+            ) : null}
+          </DropdownMenuItem>
+
           <DropdownMenuSeparator />
 
           {technicians.length === 0 ? (

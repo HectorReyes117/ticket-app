@@ -275,10 +275,10 @@ export async function updateTicketStatus(
 
 export async function assignTicket(
   ticketId: string | number,
-  assigneeId: string | number,
+  assigneeId?: string | number | null,
 ): Promise<Ticket> {
   const payload = {
-    assigneeId: parseInt(String(assigneeId), 10),
+    assigneeId: assigneeId ? parseInt(String(assigneeId), 10) : null,
   };
 
   const updated = await api.patch<BackendTicketDto>(`/tickets/${ticketId}/assign`, payload);
