@@ -898,9 +898,13 @@ export function TicketDetailPage() {
                 )}
               >
                 <div className="flex items-center gap-3">
-                  <div className="size-8 rounded-full bg-brand-soft text-brand font-bold flex items-center justify-center text-xs">
-                    {t.name[0]}
-                  </div>
+                  <UserAvatar
+                    name={t.name}
+                    avatarUrl={t.avatarUrl}
+                    color={t.color}
+                    presence={t.presence}
+                    size="sm"
+                  />
                   <div className="flex flex-col">
                     <span className="text-xs font-bold text-foreground">{t.name}</span>
                     <span className="text-[11px] text-muted-foreground">{t.email}</span>
