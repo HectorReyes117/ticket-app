@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Airplay,
@@ -139,8 +139,7 @@ export function TicketForm() {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const activeUsers = useMemo(() => users.filter((u) => u.active), [users]);
-  const selectedRequestor = users.find((u) => u.id === form.requestorId) ?? user;
+  const selectedRequestor = user ?? users.find((u) => u.id === form.requestorId);
   const currentCategory = STITCH_CATEGORIES.find((c) => c.key === form.categoryKey) ?? STITCH_CATEGORIES[0];
 
   const setField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
@@ -711,16 +710,9 @@ export function TicketForm() {
               <User className="size-4 text-brand" />
               <span className="text-xs font-bold text-foreground">Datos del Solicitante</span>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                const nextUser = activeUsers.find((u) => u.id !== form.requestorId) ?? activeUsers[0];
-                if (nextUser) setField("requestorId", nextUser.id);
-              }}
-              className="text-brand hover:underline text-xs font-semibold"
-            >
-              Cambiar
-            </button>
+            <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+              Usuario actual
+            </span>
           </div>
 
           <div className="flex items-center gap-3.5">
