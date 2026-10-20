@@ -1,6 +1,6 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronRight } from "lucide-react";
+import { Check, ChevronRight, UserPlus } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -9,11 +9,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { PriorityBadge } from "@/components/common/PriorityBadge";
 import { UserAvatar } from "@/components/common/UserAvatar";
 import { SlaTimer } from "@/components/common/SlaTimer";
-import { formatDate, formatTicketId } from "@/utils";
+import { useTicketStore } from "@/store";
+import { useAuth } from "@/context/auth-context";
+import { toast } from "@/components/ui/toast";
+import { formatDate, formatTicketId, cn } from "@/utils";
 import type { Site, Ticket, User } from "@/types";
 
 interface TicketTableProps {
@@ -27,30 +38,120 @@ interface TicketTableProps {
   plain?: boolean;
 }
 
-function AssigneeCell({
-  assigneeId,
+function AssigneeDropdown({
+  ticket,
   usersById,
+  technicians,
 }: {
-  assigneeId?: string;
+  ticket: Ticket;
   usersById: Record<string, User | undefined>;
+  technicians: User[];
 }) {
-  const assignee = assigneeId ? usersById[assigneeId] : undefined;
-  if (!assignee) {
-    return (
-      <span className="text-sm text-muted-foreground">Sin asignar</span>
-    );
-  }
+  const { user } = useAuth();
+  const assignTicket = useTicketStore((state) => state.assignTicket);
+  const [loading, setLoading] = useState(false);
+
+  const assignee = ticket.assigneeId ? usersById[ticket.assigneeId] : undefined;
+
+  const handleAssign = async (techId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (loading || techId === ticket.assigneeId) return;
+
+    try {
+      setLoading(true);
+      await assignTicket(ticket.id, techId, user?.id ?? "system");
+      toast.add({
+        title: "Técnico asignado",
+        description: `Se asignó a ${usersById[techId]?.name ?? "técnico"}.`,
+        type: "success",
+      });
+    } catch {
+      toast.add({
+        title: "Error al asignar",
+        description: "No se pudo actualizar la asignación del ticket.",
+        type: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <span className="flex min-w-0 items-center gap-2">
-      <UserAvatar
-        name={assignee.name}
-        avatarUrl={assignee.avatarUrl}
-        color={assignee.color}
-        presence={assignee.presence}
-        size="sm"
-      />
-      <span className="truncate text-sm text-foreground">{assignee.name}</span>
-    </span>
+    <div
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
+      className="inline-block"
+    >
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          className={cn(
+            "group/btn inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-left text-sm transition-colors hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+            loading && "opacity-50 pointer-events-none"
+          )}
+        >
+          {assignee ? (
+            <span className="flex min-w-0 items-center gap-2">
+              <UserAvatar
+                name={assignee.name}
+                avatarUrl={assignee.avatarUrl}
+                color={assignee.color}
+                presence={assignee.presence}
+                size="sm"
+              />
+              <span className="truncate text-sm font-medium text-foreground group-hover/btn:text-brand">
+                {assignee.name}
+              </span>
+            </span>
+          ) : (
+            <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors group-hover/btn:text-foreground">
+              <UserPlus className="size-3.5 text-muted-foreground/70 group-hover/btn:text-brand" />
+              <span>Sin asignar</span>
+            </span>
+          )}
+        </DropdownMenuTrigger>
+
+        <DropdownMenuContent align="start" className="w-64 max-h-72 overflow-y-auto">
+          <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground">
+            Asignar especialista
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+
+          {technicians.length === 0 ? (
+            <div className="px-2 py-3 text-center text-xs text-muted-foreground">
+              No hay técnicos disponibles
+            </div>
+          ) : (
+            technicians.map((tech) => {
+              const isCurrent = tech.id === ticket.assigneeId;
+              return (
+                <DropdownMenuItem
+                  key={tech.id}
+                  onClick={(e) => handleAssign(tech.id, e)}
+                  className="flex items-center justify-between gap-2 py-1.5 cursor-pointer"
+                >
+                  <span className="flex min-w-0 items-center gap-2">
+                    <UserAvatar
+                      name={tech.name}
+                      avatarUrl={tech.avatarUrl}
+                      color={tech.color}
+                      presence={tech.presence}
+                      size="sm"
+                    />
+                    <span className="truncate text-sm text-foreground">
+                      {tech.name}
+                    </span>
+                  </span>
+
+                  {isCurrent ? (
+                    <Check className="size-4 shrink-0 text-brand" />
+                  ) : null}
+                </DropdownMenuItem>
+              );
+            })
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }
 
@@ -63,6 +164,14 @@ export function TicketTable({
   const navigate = useNavigate();
   const usersById = useMemo(
     () => Object.fromEntries(usersList.map((u) => [u.id, u])),
+    [usersList],
+  );
+
+  const technicians = useMemo(
+    () =>
+      usersList
+        .filter((u) => u.role === "technician" || u.role === "admin")
+        .sort((a, b) => a.name.localeCompare(b.name, "es")),
     [usersList],
   );
 
@@ -119,7 +228,11 @@ export function TicketTable({
                   )}
                 </TableCell>
                 <TableCell>
-                  <AssigneeCell assigneeId={ticket.assigneeId} usersById={usersById} />
+                  <AssigneeDropdown
+                    ticket={ticket}
+                    usersById={usersById}
+                    technicians={technicians}
+                  />
                 </TableCell>
                 <TableCell>
                   <span className="text-sm text-muted-foreground">
