@@ -12,7 +12,7 @@ using TicketApp.Infrastructure.Context;
 namespace TicketApp.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20261020011259_InitialSupabasePostgreSql")]
+    [Migration("20261020013736_InitialSupabasePostgreSql")]
     partial class InitialSupabasePostgreSql
     {
         /// <inheritdoc />
@@ -62,7 +62,7 @@ namespace TicketApp.Infrastructure.Migrations
                     b.Property<DateTime>("UploadedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("GETUTCDATE()");
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<int>("UploadedById")
                         .HasColumnType("integer");
@@ -239,7 +239,7 @@ namespace TicketApp.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("GETUTCDATE()");
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -284,7 +284,7 @@ namespace TicketApp.Infrastructure.Migrations
                     b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("GETUTCDATE()");
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.HasKey("Id");
 
@@ -321,7 +321,7 @@ namespace TicketApp.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("GETUTCDATE()");
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<bool>("IsPublic")
                         .ValueGeneratedOnAdd()
@@ -365,7 +365,7 @@ namespace TicketApp.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("GETUTCDATE()");
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<int?>("DepartmentId")
                         .HasColumnType("integer");

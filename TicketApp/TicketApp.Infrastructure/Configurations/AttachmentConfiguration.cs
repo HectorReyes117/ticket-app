@@ -29,7 +29,7 @@ public class AttachmentConfiguration : IEntityTypeConfiguration<Attachment>
             .HasMaxLength(100);
 
         builder.Property(a => a.UploadedAt)
-            .HasDefaultValueSql("GETUTCDATE()");
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
         builder.HasOne(a => a.UploadedBy)
             .WithMany(u => u.UploadedAttachments)

@@ -40,10 +40,10 @@ public class TicketConfiguration : IEntityTypeConfiguration<Ticket>
             .IsRequired();
 
         builder.Property(t => t.CreatedAt)
-            .HasDefaultValueSql("GETUTCDATE()");
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
         builder.Property(t => t.UpdatedAt)
-            .HasDefaultValueSql("GETUTCDATE()");
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
         builder.HasIndex(t => new { t.Status, t.LocationId, t.CreatedAt });
 

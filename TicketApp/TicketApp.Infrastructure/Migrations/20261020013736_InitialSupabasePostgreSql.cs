@@ -40,7 +40,7 @@ namespace TicketApp.Infrastructure.Migrations
                     PhysicalPath = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     FileSize = table.Column<long>(type: "bigint", nullable: false),
                     MimeType = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    UploadedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    UploadedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
                 },
                 constraints: table =>
                 {
@@ -107,7 +107,7 @@ namespace TicketApp.Infrastructure.Migrations
                     LocationId = table.Column<int>(type: "integer", nullable: true),
                     DepartmentId = table.Column<int>(type: "integer", nullable: true),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
                 },
                 constraints: table =>
                 {
@@ -144,8 +144,8 @@ namespace TicketApp.Infrastructure.Migrations
                     LocationAreaId = table.Column<int>(type: "integer", nullable: true),
                     RequesterId = table.Column<int>(type: "integer", nullable: false),
                     AssigneeId = table.Column<int>(type: "integer", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "GETUTCDATE()"),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "GETUTCDATE()"),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
                     SlaDueAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     ResolvedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     ResolutionSummary = table.Column<string>(type: "text", nullable: true)
@@ -192,7 +192,7 @@ namespace TicketApp.Infrastructure.Migrations
                     IsPublic = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
                     PreviousValue = table.Column<string>(type: "text", nullable: true),
                     NewValue = table.Column<string>(type: "text", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "GETUTCDATE()")
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
                 },
                 constraints: table =>
                 {

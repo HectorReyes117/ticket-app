@@ -22,7 +22,7 @@ public class TicketActivityConfiguration : IEntityTypeConfiguration<TicketActivi
             .HasDefaultValue(true);
 
         builder.Property(a => a.CreatedAt)
-            .HasDefaultValueSql("GETUTCDATE()");
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
         builder.HasIndex(a => new { a.TicketId, a.CreatedAt });
 

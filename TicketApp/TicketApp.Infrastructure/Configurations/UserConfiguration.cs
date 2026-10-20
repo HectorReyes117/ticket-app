@@ -56,7 +56,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasDefaultValue(true);
 
         builder.Property(u => u.CreatedAt)
-            .HasDefaultValueSql("GETUTCDATE()");
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
         builder.HasOne(u => u.Location)
             .WithMany(l => l.Users)
