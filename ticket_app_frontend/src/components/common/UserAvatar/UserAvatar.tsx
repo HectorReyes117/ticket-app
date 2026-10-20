@@ -1,5 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { initials } from "@/utils";
+import { initials, resolveFileUrl } from "@/utils";
 import { cn } from "@/utils";
 import type { Presence } from "@/types";
 
@@ -34,11 +34,7 @@ export function UserAvatar({
   className,
 }: UserAvatarProps) {
   const tokens = SIZE[size];
-  const fullAvatarUrl = avatarUrl
-    ? avatarUrl.startsWith("http")
-      ? avatarUrl
-      : `http://localhost:5214${avatarUrl}`
-    : "";
+  const fullAvatarUrl = avatarUrl ? resolveFileUrl(avatarUrl) : "";
 
   return (
     <span className={cn("relative inline-flex shrink-0", className)}>

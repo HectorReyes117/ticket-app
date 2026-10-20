@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Airplay,
@@ -6,11 +6,12 @@ import {
   Building,
   CheckCircle2,
   Code,
+  Download,
   ExternalLink,
+  Eye,
   FileCode,
   FileText,
   FolderSync,
-  Image as ImageIcon,
   KeyRound,
   Layers,
   Link as LinkIcon,
@@ -37,6 +38,15 @@ import { PRIORITIES, PRIORITY_META } from "@/utils";
 import { cn, required } from "@/utils";
 import type { Priority } from "@/types";
 import { uploadTicketAttachment } from "../services/ticketService";
+import {
+  FileThumbnail,
+  getFileCategory,
+  isPreviewable,
+} from "@/components/common/FileThumbnail";
+import {
+  FilePreviewModal,
+  type PreviewFileTarget,
+} from "@/components/common/FilePreviewModal";
 
 // Visual 5 categories exactly matching Stitch screen
 interface StitchCategoryItem {
@@ -108,8 +118,9 @@ interface AttachmentFile {
   size: string;
   timeAgo: string;
   status: string;
-  type: "image" | "log";
+  type: string;
   file: File;
+  objectUrl: string;
 }
 
 export function TicketForm() {
@@ -135,9 +146,19 @@ export function TicketForm() {
 
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [attachments, setAttachments] = useState<AttachmentFile[]>([]);
+  const [previewTarget, setPreviewTarget] = useState<PreviewFileTarget | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Revoke object URLs on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      attachments.forEach((a) => {
+        if (a.objectUrl) URL.revokeObjectURL(a.objectUrl);
+      });
+    };
+  }, [attachments]);
 
   const selectedRequestor = user ?? users.find((u) => u.id === form.requestorId);
   const currentCategory = STITCH_CATEGORIES.find((c) => c.key === form.categoryKey) ?? STITCH_CATEGORIES[0];
@@ -173,14 +194,16 @@ export function TicketForm() {
     Array.from(files).forEach((file) => {
       const isImg = file.type.startsWith("image/");
       const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+      const objectUrl = URL.createObjectURL(file);
       newItems.push({
         id: `${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         name: file.name,
         size: `${sizeMb} MB`,
         timeAgo: "Listo para subir",
         status: "Pendiente",
-        type: isImg ? "image" : "log",
+        type: isImg ? "image" : "file",
         file,
+        objectUrl,
       });
     });
 
@@ -189,6 +212,16 @@ export function TicketForm() {
       title: "Archivos agregados",
       description: `${newItems.length} archivo(s) añadido(s) a la lista.`,
       type: "success",
+    });
+  };
+
+  const removeAttachment = (fileId: string) => {
+    setAttachments((prev) => {
+      const target = prev.find((item) => item.id === fileId);
+      if (target?.objectUrl) {
+        URL.revokeObjectURL(target.objectUrl);
+      }
+      return prev.filter((item) => item.id !== fileId);
     });
   };
 
@@ -244,9 +277,6 @@ export function TicketForm() {
     }
   };
 
-  const removeAttachment = (id: string) => {
-    setAttachments((prev) => prev.filter((a) => a.id !== id));
-  };
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
@@ -613,7 +643,7 @@ export function TicketForm() {
               <span className="text-brand underline font-bold">explora tus archivos</span>
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Soporta JPG, PNG, PDF, LOG, PCAP, TXT (hasta 25 MB por archivo)
+              Soporta imágenes, videos, audios, PDF, documentos Word/Excel y logs (hasta 25 MB por archivo)
             </p>
           </div>
 
@@ -623,36 +653,76 @@ export function TicketForm() {
               Archivos adjuntos en esta solicitud ({attachments.length}):
             </div>
 
-            {attachments.map((file) => (
-              <div
-                key={file.id}
-                className="flex items-center justify-between p-3 rounded-xl bg-muted/40 border border-border hover:bg-muted/60 transition-colors"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="size-9 rounded-lg bg-brand-soft text-brand flex items-center justify-center shrink-0">
-                    {file.type === "image" ? <ImageIcon className="size-4" /> : <FileText className="size-4" />}
+            {attachments.map((file) => {
+              const category = getFileCategory(file.name, file.file.type);
+              const canPreview = isPreviewable(category);
+
+              return (
+                <div
+                  key={file.id}
+                  className="flex items-center justify-between p-3 rounded-xl bg-muted/40 border border-border hover:bg-muted/60 transition-colors"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <FileThumbnail
+                      fileName={file.name}
+                      mimeType={file.file.type}
+                      previewUrl={file.objectUrl}
+                      className="size-10"
+                    />
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-xs font-semibold text-foreground truncate" title={file.name}>
+                        {file.name}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground">
+                        {file.size} • {file.timeAgo}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex flex-col min-w-0">
-                    <span className="text-xs font-semibold text-foreground truncate">
-                      {file.name}
-                    </span>
-                    <span className="text-[11px] text-muted-foreground">
-                      {file.size} • {file.timeAgo}
-                    </span>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {canPreview && (
+                      <button
+                        type="button"
+                        title="Previsualizar"
+                        onClick={() =>
+                          setPreviewTarget({
+                            name: file.name,
+                            url: file.objectUrl,
+                            mimeType: file.file.type,
+                            size: file.size,
+                          })
+                        }
+                        className="p-1.5 text-muted-foreground hover:text-brand hover:bg-card rounded-lg transition-colors cursor-pointer"
+                      >
+                        <Eye className="size-4" />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      title="Descargar"
+                      onClick={() => {
+                        const link = document.createElement("a");
+                        link.href = file.objectUrl;
+                        link.download = file.name;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                      }}
+                      className="p-1.5 text-muted-foreground hover:text-brand hover:bg-card rounded-lg transition-colors cursor-pointer"
+                    >
+                      <Download className="size-4" />
+                    </button>
+                    <button
+                      type="button"
+                      title="Eliminar"
+                      onClick={() => removeAttachment(file.id)}
+                      className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-card rounded-lg transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    type="button"
-                    title="Eliminar"
-                    onClick={() => removeAttachment(file.id)}
-                    className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-card rounded-lg transition-colors"
-                  >
-                    <Trash2 className="size-4" />
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -877,6 +947,20 @@ export function TicketForm() {
           </div>
         </div>
       </aside>
+
+      {/* Modal Visor de Documentos/Evidencias */}
+      <FilePreviewModal
+        target={previewTarget}
+        onClose={() => setPreviewTarget(null)}
+        onDownload={(url, name) => {
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = name;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }}
+      />
     </div>
   );
 }

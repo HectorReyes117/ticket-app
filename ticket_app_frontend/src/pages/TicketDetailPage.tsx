@@ -15,7 +15,6 @@ import {
   Loader2,
   Lock,
   Mail,
-  Paperclip,
   Phone,
   Send,
   Server,
@@ -36,9 +35,18 @@ import {
 import { toast } from "@/components/ui/toast";
 import { useSiteStore, useTicketStore, useUserStore } from "@/store";
 import { useAuth } from "@/context/auth-context";
-import { formatDateTime, formatRelativeTime, formatSla, parseDate, PRIORITY_META, cn } from "@/utils";
+import { formatDateTime, formatRelativeTime, formatSla, parseDate, PRIORITY_META, cn, resolveFileUrl } from "@/utils";
 import { uploadTicketAttachment } from "@/features/tickets/services/ticketService";
 import { UserAvatar } from "@/components/common/UserAvatar";
+import {
+  FileThumbnail,
+  getFileCategory,
+  isPreviewable,
+} from "@/components/common/FileThumbnail";
+import {
+  FilePreviewModal,
+  type PreviewFileTarget,
+} from "@/components/common/FilePreviewModal";
 import { getStoredToken } from "@/services/api";
 import type { TicketStatus } from "@/types";
 
@@ -84,6 +92,7 @@ export function TicketDetailPage() {
   const [selectedStatusForm, setSelectedStatusForm] = useState<TicketStatus>("in_progress");
   const [notifyEmail, setNotifyEmail] = useState(true);
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [previewTarget, setPreviewTarget] = useState<PreviewFileTarget | null>(null);
   const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
   const attachmentFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -799,15 +808,12 @@ export function TicketDetailPage() {
             <div className="flex flex-col gap-2">
               {ticket.attachments.length > 0 ? (
                 ticket.attachments.map((file) => {
-                  const isImage = file.mimeType?.startsWith("image/") || /\.(png|jpe?g|webp|gif)$/i.test(file.name);
+                  const downloadUrl = file.fileUrl ? resolveFileUrl(file.fileUrl) : undefined;
+                  const category = getFileCategory(file.name, file.mimeType);
+                  const canPreview = isPreviewable(category);
                   const sizeFormatted = file.size
                     ? `${(file.size / (1024 * 1024)).toFixed(2)} MB`
                     : "Archivo adjunto";
-                  const downloadUrl = file.fileUrl
-                    ? file.fileUrl.startsWith("http")
-                      ? file.fileUrl
-                      : `http://localhost:5214${file.fileUrl}`
-                    : undefined;
 
                   return (
                     <div
@@ -815,9 +821,12 @@ export function TicketDetailPage() {
                       className="p-2.5 bg-muted/60 rounded-xl flex items-center justify-between border border-border/40 hover:bg-muted transition-colors"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="size-8 rounded-lg bg-card text-brand flex items-center justify-center shrink-0 border border-border">
-                          {isImage ? <Paperclip className="size-4" /> : <FileText className="size-4" />}
-                        </div>
+                        <FileThumbnail
+                          fileName={file.name}
+                          mimeType={file.mimeType}
+                          previewUrl={downloadUrl}
+                          className="size-9 rounded-lg"
+                        />
                         <div className="flex flex-col min-w-0">
                           <span className="text-xs font-semibold text-foreground truncate" title={file.name}>
                             {file.name}
@@ -829,15 +838,23 @@ export function TicketDetailPage() {
                       </div>
                       {downloadUrl ? (
                         <div className="flex items-center gap-1">
-                          <a
-                            href={downloadUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title="Ver documento / imagen"
-                            className="p-1.5 text-muted-foreground hover:text-brand transition-colors rounded-lg hover:bg-card"
-                          >
-                            <Eye className="size-4" />
-                          </a>
+                          {canPreview && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setPreviewTarget({
+                                  name: file.name,
+                                  url: downloadUrl,
+                                  mimeType: file.mimeType,
+                                  size: sizeFormatted,
+                                })
+                              }
+                              title="Previsualizar archivo"
+                              className="p-1.5 text-muted-foreground hover:text-brand transition-colors rounded-lg hover:bg-card cursor-pointer"
+                            >
+                              <Eye className="size-4" />
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={() => handleDownloadFile(downloadUrl, file.name)}
@@ -954,6 +971,13 @@ export function TicketDetailPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal Visor de Documentos/Evidencias */}
+      <FilePreviewModal
+        target={previewTarget}
+        onClose={() => setPreviewTarget(null)}
+        onDownload={(url, name) => handleDownloadFile(url, name)}
+      />
     </div>
   );
 }
