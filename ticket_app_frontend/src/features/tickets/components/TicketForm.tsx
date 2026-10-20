@@ -151,14 +151,21 @@ export function TicketForm() {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Revoke object URLs on unmount to prevent memory leaks
+  // Store object URLs in a ref to reliably revoke all on unmount only
+  const objectUrlsRef = useRef<Set<string>>(new Set());
+
   useEffect(() => {
     return () => {
-      attachments.forEach((a) => {
-        if (a.objectUrl) URL.revokeObjectURL(a.objectUrl);
+      objectUrlsRef.current.forEach((url) => {
+        try {
+          URL.revokeObjectURL(url);
+        } catch {
+          // ignore
+        }
       });
+      objectUrlsRef.current.clear();
     };
-  }, [attachments]);
+  }, []);
 
   const selectedRequestor = user ?? users.find((u) => u.id === form.requestorId);
   const currentCategory = STITCH_CATEGORIES.find((c) => c.key === form.categoryKey) ?? STITCH_CATEGORIES[0];
@@ -195,6 +202,7 @@ export function TicketForm() {
       const isImg = file.type.startsWith("image/");
       const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
       const objectUrl = URL.createObjectURL(file);
+      objectUrlsRef.current.add(objectUrl);
       newItems.push({
         id: `${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         name: file.name,
@@ -219,7 +227,12 @@ export function TicketForm() {
     setAttachments((prev) => {
       const target = prev.find((item) => item.id === fileId);
       if (target?.objectUrl) {
-        URL.revokeObjectURL(target.objectUrl);
+        objectUrlsRef.current.delete(target.objectUrl);
+        try {
+          URL.revokeObjectURL(target.objectUrl);
+        } catch {
+          // ignore
+        }
       }
       return prev.filter((item) => item.id !== fileId);
     });

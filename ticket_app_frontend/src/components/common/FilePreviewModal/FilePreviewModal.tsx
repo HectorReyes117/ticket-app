@@ -31,11 +31,14 @@ export function FilePreviewModal({
 
   return (
     <Dialog open={!!target} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-4xl p-0 overflow-hidden bg-background border-border flex flex-col max-h-[90vh]">
+      <DialogContent
+        showCloseButton={false}
+        className="max-w-6xl sm:max-w-6xl w-[95vw] md:w-[90vw] p-0 overflow-hidden bg-background border-border flex flex-col h-[90vh] max-h-[92vh] rounded-2xl shadow-2xl"
+      >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-card/50">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-card/80 backdrop-blur-sm shrink-0">
           <div className="flex flex-col min-w-0 pr-4">
-            <DialogTitle className="text-sm font-semibold text-foreground truncate">
+            <DialogTitle className="text-base font-semibold text-foreground truncate">
               {target.name}
             </DialogTitle>
             {target.size && (
@@ -64,28 +67,38 @@ export function FilePreviewModal({
             >
               <ExternalLink className="size-4" />
             </a>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              onClick={onClose}
+              className="size-8 rounded-lg text-muted-foreground hover:text-foreground"
+              title="Cerrar visor"
+            >
+              <span className="text-lg leading-none font-medium">✕</span>
+            </Button>
           </div>
         </div>
 
         {/* Preview Container */}
-        <div className="flex-1 overflow-auto bg-muted/20 p-4 flex items-center justify-center min-h-[300px]">
+        <div className="flex-1 overflow-auto bg-muted/30 p-6 flex items-center justify-center min-h-0 w-full">
           {category === "image" && (
-            <div className="relative max-h-[70vh] flex items-center justify-center">
+            <div className="relative w-full h-full flex items-center justify-center">
               <img
                 src={target.url}
                 alt={target.name}
-                className="max-h-[70vh] max-w-full rounded-lg object-contain shadow-md"
+                className="max-h-[78vh] max-w-full rounded-xl object-contain shadow-lg"
               />
             </div>
           )}
 
           {category === "video" && (
-            <div className="w-full max-w-3xl rounded-lg overflow-hidden bg-black shadow-md">
+            <div className="w-full h-full max-w-5xl rounded-xl overflow-hidden bg-black shadow-lg flex items-center justify-center">
               <video
                 src={target.url}
                 controls
                 autoPlay
-                className="w-full max-h-[70vh]"
+                className="w-full max-h-[78vh] object-contain"
               >
                 Tu navegador no soporta reproducción de video HTML5.
               </video>
@@ -93,11 +106,11 @@ export function FilePreviewModal({
           )}
 
           {category === "pdf" && (
-            <div className="w-full h-[70vh] rounded-lg overflow-hidden border border-border shadow-md bg-white">
+            <div className="w-full h-full rounded-xl overflow-hidden border border-border shadow-lg bg-white">
               <iframe
                 src={`${target.url}#toolbar=1`}
                 title={target.name}
-                className="w-full h-full"
+                className="w-full h-full min-h-[75vh]"
               />
             </div>
           )}
