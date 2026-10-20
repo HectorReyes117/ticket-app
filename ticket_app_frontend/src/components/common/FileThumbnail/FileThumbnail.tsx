@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FileText,
   FileSpreadsheet,
@@ -83,6 +83,11 @@ export function FileThumbnail({
 }: FileThumbnailProps) {
   const [imgError, setImgError] = useState(false);
   const category = getFileCategory(fileName, mimeType);
+
+  // Reset imgError whenever previewUrl changes
+  useEffect(() => {
+    setImgError(false);
+  }, [previewUrl]);
 
   if (category === "image" && previewUrl && !imgError) {
     return (
