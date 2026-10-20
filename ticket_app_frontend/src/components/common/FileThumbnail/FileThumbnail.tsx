@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   FileText,
   FileSpreadsheet,
@@ -80,9 +81,10 @@ export function FileThumbnail({
   className,
   iconClassName = "size-4",
 }: FileThumbnailProps) {
+  const [imgError, setImgError] = useState(false);
   const category = getFileCategory(fileName, mimeType);
 
-  if (category === "image" && previewUrl) {
+  if (category === "image" && previewUrl && !imgError) {
     return (
       <div
         className={cn(
@@ -95,6 +97,7 @@ export function FileThumbnail({
           alt={fileName}
           className="w-full h-full object-cover transition-transform duration-200 group-hover:scale-110"
           loading="lazy"
+          onError={() => setImgError(true)}
         />
       </div>
     );
