@@ -154,7 +154,8 @@ export function TicketKanban({
   onMove,
 }: TicketKanbanProps) {
   const { user } = useAuth();
-  const canChangeStatus = user?.role === "technician" || user?.role === "admin" || user?.role === "director";
+  const canStaffChangeStatus =
+    user?.role === "technician" || user?.role === "admin" || user?.role === "director";
 
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<TicketStatus | null>(null);
@@ -165,7 +166,7 @@ export function TicketKanban({
   );
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>, status: TicketStatus) => {
-    if (!canChangeStatus) return;
+    if (!canStaffChangeStatus) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
     if (dragOverColumn !== status) {
@@ -174,7 +175,7 @@ export function TicketKanban({
   };
 
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>, status: TicketStatus) => {
-    if (!canChangeStatus) return;
+    if (!canStaffChangeStatus) return;
     // Only clear if leaving the column element itself
     if (e.currentTarget.contains(e.relatedTarget as Node)) return;
     if (dragOverColumn === status) {
@@ -183,7 +184,7 @@ export function TicketKanban({
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetStatus: TicketStatus) => {
-    if (!canChangeStatus) return;
+    if (!canStaffChangeStatus) return;
     e.preventDefault();
     setDragOverColumn(null);
     setActiveDragId(null);
@@ -193,6 +194,9 @@ export function TicketKanban({
 
     const ticket = tickets.find((t) => t.id === ticketId);
     if (ticket && ticket.status !== targetStatus) {
+      if (targetStatus !== "pending" && !ticket.assigneeId) {
+        return;
+      }
       onMove(ticketId, targetStatus);
     }
   };
@@ -246,7 +250,7 @@ export function TicketKanban({
                     assignee={ticket.assigneeId ? usersById[ticket.assigneeId] : undefined}
                     site={sitesById[ticket.siteId]}
                     onMove={(newStatus) => onMove(ticket.id, newStatus)}
-                    canChangeStatus={canChangeStatus}
+                    canChangeStatus={canStaffChangeStatus && Boolean(ticket.assigneeId)}
                   />
                 ))}
               </div>

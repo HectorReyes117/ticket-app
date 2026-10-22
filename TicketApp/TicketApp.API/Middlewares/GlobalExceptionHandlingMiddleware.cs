@@ -54,6 +54,11 @@ public class GlobalExceptionHandlingMiddleware
                 statusCode = HttpStatusCode.Unauthorized;
                 message = unauthEx.Message;
                 break;
+
+            case BusinessRuleException businessEx:
+                statusCode = HttpStatusCode.BadRequest;
+                message = businessEx.Message;
+                break;
         }
 
         context.Response.StatusCode = (int)statusCode;

@@ -64,6 +64,12 @@ public class UpdateTicketStatusCommandHandler : IRequestHandler<UpdateTicketStat
         if (ticket == null)
             throw new NotFoundException("Ticket", request.TicketId);
 
+        // Regla: Solo una solicitud con responsable asignado puede pasar a un estado distinto de 'Pending'
+        if (request.NewStatus != TicketStatus.Pending && !ticket.AssigneeId.HasValue)
+        {
+            throw new BusinessRuleException("La solicitud debe estar asignada a un responsable para poder cambiar su estado a 'En Proceso' u otro estado operativo.");
+        }
+
         var previousStatus = ticket.Status;
         ticket.Status = request.NewStatus;
         ticket.UpdatedAt = DateTime.UtcNow;

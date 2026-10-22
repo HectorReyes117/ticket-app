@@ -69,6 +69,7 @@ export function TicketDetailPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isStaff = user?.role === "technician" || user?.role === "admin" || user?.role === "director";
+  const isAdmin = user?.role === "admin";
 
   const ticket = useTicketStore((state) => state.items.find((t) => t.id === id));
   const updateStatus = useTicketStore((state) => state.updateStatus);
@@ -248,6 +249,14 @@ export function TicketDetailPage() {
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedStatusForm !== ticket.status) {
+      if (selectedStatusForm !== "pending" && !ticket.assigneeId) {
+        toast.add({
+          title: "Asignación requerida",
+          description: "La solicitud debe estar asignada a un responsable para pasar a otro estado.",
+          type: "error",
+        });
+        return;
+      }
       if (selectedStatusForm === "resolved" || selectedStatusForm === "cancelled") {
         setPendingStatus(selectedStatusForm);
         return;
@@ -289,22 +298,32 @@ export function TicketDetailPage() {
         {/* Action Buttons: solo para staff (técnicos, directores, admin) */}
         {isStaff && (
           <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setShowAssignModal(true)}
-              className="gap-2 text-xs font-medium rounded-xl border-border bg-card shadow-xs"
-            >
-              <ArrowLeftRight className="size-4 text-muted-foreground" />
-              <span>Reasignar</span>
-            </Button>
+            {isAdmin && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAssignModal(true)}
+                className="gap-2 text-xs font-medium rounded-xl border-border bg-card shadow-xs"
+              >
+                <ArrowLeftRight className="size-4 text-muted-foreground" />
+                <span>Reasignar</span>
+              </Button>
+            )}
 
             {ticket.status !== "resolved" && ticket.status !== "cancelled" ? (
               <Button
                 type="button"
                 size="sm"
                 onClick={() => {
+                  if (!ticket.assigneeId) {
+                    toast.add({
+                      title: "Asignación requerida",
+                      description: "La solicitud debe estar asignada a un responsable para poder cerrarse o resolverse.",
+                      type: "error",
+                    });
+                    return;
+                  }
                   setResolution("");
                   setPendingStatus("resolved");
                 }}
@@ -673,7 +692,7 @@ export function TicketDetailPage() {
               </div>
             </div>
 
-            {isStaff && (
+            {isAdmin && (
               <Button
                 type="button"
                 variant="outline"

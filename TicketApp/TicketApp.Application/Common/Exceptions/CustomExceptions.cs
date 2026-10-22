@@ -25,3 +25,8 @@ public class UnauthorizedException : Exception
 {
     public UnauthorizedException(string message = "No tiene autorización para realizar esta acción.") : base(message) { }
 }
+
+public class BusinessRuleException : Exception
+{
+    public BusinessRuleException(string message) : base(message) { }
+}
