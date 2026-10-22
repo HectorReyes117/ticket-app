@@ -204,7 +204,7 @@ export function TicketTable({
 }: TicketTableProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const canAssign = user?.role === "technician" || user?.role === "admin" || user?.role === "director";
+  const canAssign = user?.role === "admin";
 
   const usersById = useMemo(
     () => Object.fromEntries(usersList.map((u) => [u.id, u])),

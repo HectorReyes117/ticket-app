@@ -43,8 +43,8 @@ public class AssignTicketCommandHandler : IRequestHandler<AssignTicketCommand, A
     public async Task<ApiResponse<TicketDto>> Handle(AssignTicketCommand request, CancellationToken cancellationToken)
     {
         var currentRole = _currentUserService.Role?.ToLowerInvariant();
-        if (currentRole == "requestor")
-            throw new UnauthorizedException("Los solicitantes no tienen autorización para asignar o reasignar solicitudes.");
+        if (currentRole != "admin")
+            throw new UnauthorizedException("Solo los administradores tienen autorización para asignar o reasignar solicitudes.");
 
         var ticket = await _unitOfWork.Repository<Ticket>()
             .Query()
