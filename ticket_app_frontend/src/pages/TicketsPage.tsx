@@ -25,12 +25,16 @@ export function TicketsPage() {
   const [range, setRange] = useState<DateRange | undefined>(undefined);
 
   const isRequestor = user?.role === "requestor";
+  const isTechnician = user?.role === "technician";
   const tickets = useMemo(() => {
     if (isRequestor && user?.id) {
       return allTickets.filter((t) => t.requestorId === user.id);
     }
+    if (isTechnician && user?.id) {
+      return allTickets.filter((t) => t.assigneeId === user.id);
+    }
     return allTickets;
-  }, [allTickets, isRequestor, user?.id]);
+  }, [allTickets, isRequestor, isTechnician, user?.id]);
 
   const stats = useMemo(() => summarizeTickets(tickets), [tickets]);
 

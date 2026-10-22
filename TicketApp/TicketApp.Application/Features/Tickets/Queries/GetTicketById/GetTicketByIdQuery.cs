@@ -48,10 +48,15 @@ public class GetTicketByIdQueryHandler : IRequestHandler<GetTicketByIdQuery, Api
         var currentRole = _currentUserService.Role?.ToLower();
         var currentUserId = _currentUserService.UserId;
 
-        // Security: Requestor can only view their own tickets
+        // Security: Requestor can only view their own tickets; Technician can only view their assigned tickets
         if (currentRole == "requestor" && currentUserId.HasValue && ticket.RequesterId != currentUserId.Value)
         {
             throw new UnauthorizedException("No tiene permisos para acceder a esta solicitud.");
+        }
+
+        if (currentRole == "technician" && currentUserId.HasValue && ticket.AssigneeId != currentUserId.Value)
+        {
+            throw new UnauthorizedException("No tiene permisos para acceder a solicitudes que no le han sido asignadas.");
         }
 
         // Filter private activities if requester

@@ -49,6 +49,10 @@ public class GetTicketsQueryHandler : IRequestHandler<GetTicketsQuery, ApiRespon
         {
             query = query.Where(t => t.RequesterId == currentUserId.Value);
         }
+        else if (currentRole == "technician" && currentUserId.HasValue)
+        {
+            query = query.Where(t => t.AssigneeId == currentUserId.Value);
+        }
 
         // Tab filters
         if (!string.IsNullOrWhiteSpace(request.Tab))

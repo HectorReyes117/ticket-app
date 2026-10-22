@@ -28,12 +28,16 @@ export function DashboardPage() {
   const sites = useSiteStore((state) => state.items);
 
   const isRequestor = user?.role === "requestor";
+  const isTechnician = user?.role === "technician";
   const tickets = useMemo(() => {
     if (isRequestor && user?.id) {
       return allTickets.filter((t) => t.requestorId === user.id);
     }
+    if (isTechnician && user?.id) {
+      return allTickets.filter((t) => t.assigneeId === user.id);
+    }
     return allTickets;
-  }, [allTickets, isRequestor, user?.id]);
+  }, [allTickets, isRequestor, isTechnician, user?.id]);
 
   const usersById = useMemo(
     () => Object.fromEntries(users.map((u) => [u.id, u])),

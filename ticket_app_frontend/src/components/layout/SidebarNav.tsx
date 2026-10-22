@@ -98,6 +98,9 @@ export function SidebarNav({ collapsed, onNavigate }: SidebarNavProps) {
         if (item.name === "all-tickets" && userRole === "requestor") {
           return { ...item, label: "Mis Solicitudes" };
         }
+        if (item.name === "all-tickets" && userRole === "technician") {
+          return { ...item, label: "Mis Solicitudes Asignadas" };
+        }
         return item;
       });
     return { ...group, items };
