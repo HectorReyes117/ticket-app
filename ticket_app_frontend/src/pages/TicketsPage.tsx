@@ -15,12 +15,22 @@ import { TicketsBrowser } from "@/features/tickets/components/TicketsBrowser";
 import { TicketsDistributionChart } from "@/features/tickets/components/TicketsDistributionChart";
 import { summarizeTickets } from "@/features/tickets/services/ticketQuery";
 import { useTicketStore } from "@/store";
+import { useAuth } from "@/context/auth-context";
 import type { DateRange } from "react-day-picker";
 
 export function TicketsPage() {
-  const tickets = useTicketStore((state) => state.items);
+  const { user } = useAuth();
+  const allTickets = useTicketStore((state) => state.items);
   const navigate = useNavigate();
   const [range, setRange] = useState<DateRange | undefined>(undefined);
+
+  const isRequestor = user?.role === "requestor";
+  const tickets = useMemo(() => {
+    if (isRequestor && user?.id) {
+      return allTickets.filter((t) => t.requestorId === user.id);
+    }
+    return allTickets;
+  }, [allTickets, isRequestor, user?.id]);
 
   const stats = useMemo(() => summarizeTickets(tickets), [tickets]);
 
@@ -62,8 +72,12 @@ export function TicketsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Todas las Solicitudes"
-        description="Supervisión y control global de tickets de servicio en tiempo real."
+        title={isRequestor ? "Mis Solicitudes" : "Todas las Solicitudes"}
+        description={
+          isRequestor
+            ? "Historial y estado de tus solicitudes de servicio."
+            : "Supervisión y control global de tickets de servicio en tiempo real."
+        }
         actions={
           <>
             <DateRangeFilter value={range} onChange={setRange} />

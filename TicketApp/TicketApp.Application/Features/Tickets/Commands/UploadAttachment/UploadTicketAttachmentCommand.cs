@@ -45,6 +45,10 @@ public class UploadTicketAttachmentCommandHandler : IRequestHandler<UploadTicket
 
     public async Task<ApiResponse<AttachmentDto>> Handle(UploadTicketAttachmentCommand request, CancellationToken cancellationToken)
     {
+        var currentRole = _currentUserService.Role?.ToLowerInvariant();
+        if (currentRole == "requestor")
+            throw new UnauthorizedException("Los solicitantes no pueden adjuntar archivos una vez que la solicitud ha sido creada.");
+
         var ticket = await _unitOfWork.Repository<Ticket>().GetByIdAsync(request.TicketId, cancellationToken);
         if (ticket == null)
             throw new NotFoundException("Ticket", request.TicketId);

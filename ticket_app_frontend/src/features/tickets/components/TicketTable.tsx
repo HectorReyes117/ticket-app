@@ -42,16 +42,37 @@ function AssigneeDropdown({
   ticket,
   usersById,
   technicians,
+  canAssign = true,
 }: {
   ticket: Ticket;
   usersById: Record<string, User | undefined>;
   technicians: User[];
+  canAssign?: boolean;
 }) {
   const { user } = useAuth();
   const assignTicket = useTicketStore((state) => state.assignTicket);
   const [loading, setLoading] = useState(false);
 
   const assignee = ticket.assigneeId ? usersById[ticket.assigneeId] : undefined;
+
+  if (!canAssign) {
+    return assignee ? (
+      <span className="flex min-w-0 items-center gap-2">
+        <UserAvatar
+          name={assignee.name}
+          avatarUrl={assignee.avatarUrl}
+          color={assignee.color}
+          presence={assignee.presence}
+          size="sm"
+        />
+        <span className="truncate text-sm font-medium text-foreground">
+          {assignee.name}
+        </span>
+      </span>
+    ) : (
+      <span className="text-xs text-muted-foreground font-medium">Sin asignar</span>
+    );
+  }
 
   const handleAssign = async (techId: string | null, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -182,6 +203,9 @@ export function TicketTable({
   plain = false,
 }: TicketTableProps) {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const canAssign = user?.role === "technician" || user?.role === "admin" || user?.role === "director";
+
   const usersById = useMemo(
     () => Object.fromEntries(usersList.map((u) => [u.id, u])),
     [usersList],
@@ -252,6 +276,7 @@ export function TicketTable({
                     ticket={ticket}
                     usersById={usersById}
                     technicians={technicians}
+                    canAssign={canAssign}
                   />
                 </TableCell>
                 <TableCell>

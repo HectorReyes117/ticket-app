@@ -38,6 +38,7 @@ public class TicketsController : BaseApiController
         return CreatedAtAction(nameof(GetTicketById), new { id = result.Data?.Id }, result);
     }
 
+    [Authorize(Roles = "admin,technician,director")]
     [HttpPatch("{id:int}/status")]
     public async Task<ActionResult<ApiResponse<TicketDto>>> UpdateStatus(int id, [FromBody] UpdateStatusRequest request)
     {
@@ -53,6 +54,7 @@ public class TicketsController : BaseApiController
         return Ok(result);
     }
 
+    [Authorize(Roles = "admin,technician,director")]
     [HttpPatch("{id:int}/assign")]
     public async Task<ActionResult<ApiResponse<TicketDto>>> AssignTicket(int id, [FromBody] AssignTicketRequest request)
     {
@@ -81,6 +83,7 @@ public class TicketsController : BaseApiController
         return Ok(result);
     }
 
+    [Authorize(Roles = "admin,technician,director")]
     [HttpPost("{id:int}/attachments")]
     public async Task<ActionResult<ApiResponse<AttachmentDto>>> UploadAttachment(int id, [FromForm] IFormFile file)
     {

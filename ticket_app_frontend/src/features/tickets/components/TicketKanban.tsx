@@ -10,6 +10,7 @@ import {
 import { UserAvatar } from "@/components/common/UserAvatar";
 import { PriorityBadge } from "@/components/common/PriorityBadge";
 import { SlaTimer } from "@/components/common/SlaTimer";
+import { useAuth } from "@/context/auth-context";
 import { formatTicketId, STATUS_META, TICKET_STATUSES, cn } from "@/utils";
 import type { Site, Ticket, TicketStatus, User } from "@/types";
 
@@ -20,6 +21,7 @@ interface TicketKanbanCardProps {
   site?: Site;
   onMove: (status: TicketStatus) => void;
   isDragging?: boolean;
+  canChangeStatus?: boolean;
 }
 
 export function TicketKanbanCard({
@@ -29,10 +31,15 @@ export function TicketKanbanCard({
   site,
   onMove,
   isDragging,
+  canChangeStatus = true,
 }: TicketKanbanCardProps) {
   const navigate = useNavigate();
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+    if (!canChangeStatus) {
+      e.preventDefault();
+      return;
+    }
     e.dataTransfer.setData("text/plain", ticket.id);
     e.dataTransfer.setData("application/json", JSON.stringify({ id: ticket.id, currentStatus: ticket.status }));
     e.dataTransfer.effectAllowed = "move";
@@ -51,7 +58,7 @@ export function TicketKanbanCard({
     <div
       role="button"
       tabIndex={0}
-      draggable
+      draggable={canChangeStatus}
       onDragStart={handleDragStart}
       onClick={handleCardClick}
       onKeyDown={(e) => {
@@ -61,7 +68,8 @@ export function TicketKanbanCard({
         }
       }}
       className={cn(
-        "group w-full rounded-xl border border-border bg-card p-3.5 text-left shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all hover:border-brand/40 hover:shadow-sm cursor-grab active:cursor-grabbing select-none",
+        "group w-full rounded-xl border border-border bg-card p-3.5 text-left shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-all hover:border-brand/40 hover:shadow-sm select-none",
+        canChangeStatus ? "cursor-grab active:cursor-grabbing" : "cursor-pointer",
         isDragging && "opacity-40 border-dashed border-brand"
       )}
     >
@@ -69,36 +77,38 @@ export function TicketKanbanCard({
         <span className="font-mono text-xs font-semibold tabular-nums text-brand-soft-fg">
           {formatTicketId(ticket.sequence)}
         </span>
-        <div data-no-navigate className="relative">
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              onClick={(event) => {
-                event.stopPropagation();
-              }}
-              className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground cursor-pointer"
-              aria-label="Mover solicitud"
-            >
-              <MoreHorizontal className="size-4" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44">
-              {TICKET_STATUSES.map((status) => (
-                <DropdownMenuItem
-                  key={status}
-                  disabled={status === ticket.status}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onMove(status);
-                  }}
-                >
-                  <span
-                    className={cn("size-1.5 rounded-full", STATUS_META[status].dot)}
-                  />
-                  {STATUS_META[status].label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+        {canChangeStatus && (
+          <div data-no-navigate className="relative">
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                onClick={(event) => {
+                  event.stopPropagation();
+                }}
+                className="rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-foreground cursor-pointer"
+                aria-label="Mover solicitud"
+              >
+                <MoreHorizontal className="size-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44">
+                {TICKET_STATUSES.map((status) => (
+                  <DropdownMenuItem
+                    key={status}
+                    disabled={status === ticket.status}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onMove(status);
+                    }}
+                  >
+                    <span
+                      className={cn("size-1.5 rounded-full", STATUS_META[status].dot)}
+                    />
+                    {STATUS_META[status].label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
       </div>
 
       <p className="mt-1 line-clamp-2 text-sm font-medium text-foreground">
@@ -143,6 +153,9 @@ export function TicketKanban({
   sitesById,
   onMove,
 }: TicketKanbanProps) {
+  const { user } = useAuth();
+  const canChangeStatus = user?.role === "technician" || user?.role === "admin" || user?.role === "director";
+
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<TicketStatus | null>(null);
 
@@ -152,6 +165,7 @@ export function TicketKanban({
   );
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>, status: TicketStatus) => {
+    if (!canChangeStatus) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
     if (dragOverColumn !== status) {
@@ -160,6 +174,7 @@ export function TicketKanban({
   };
 
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>, status: TicketStatus) => {
+    if (!canChangeStatus) return;
     // Only clear if leaving the column element itself
     if (e.currentTarget.contains(e.relatedTarget as Node)) return;
     if (dragOverColumn === status) {
@@ -168,6 +183,7 @@ export function TicketKanban({
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetStatus: TicketStatus) => {
+    if (!canChangeStatus) return;
     e.preventDefault();
     setDragOverColumn(null);
     setActiveDragId(null);
@@ -230,6 +246,7 @@ export function TicketKanban({
                     assignee={ticket.assigneeId ? usersById[ticket.assigneeId] : undefined}
                     site={sitesById[ticket.siteId]}
                     onMove={(newStatus) => onMove(ticket.id, newStatus)}
+                    canChangeStatus={canChangeStatus}
                   />
                 ))}
               </div>

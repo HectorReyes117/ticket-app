@@ -67,6 +67,7 @@ export function TicketDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isStaff = user?.role === "technician" || user?.role === "admin" || user?.role === "director";
 
   const ticket = useTicketStore((state) => state.items.find((t) => t.id === id));
   const updateStatus = useTicketStore((state) => state.updateStatus);
@@ -257,38 +258,40 @@ export function TicketDetailPage() {
           </span>
         </div>
 
-        {/* Action Buttons: Print removed; keeping Reasignar and Cerrar Ticket */}
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setShowAssignModal(true)}
-            className="gap-2 text-xs font-medium rounded-xl border-border bg-card shadow-xs"
-          >
-            <ArrowLeftRight className="size-4 text-muted-foreground" />
-            <span>Reasignar</span>
-          </Button>
-
-          {ticket.status !== "resolved" && ticket.status !== "cancelled" ? (
+        {/* Action Buttons: solo para staff (técnicos, directores, admin) */}
+        {isStaff && (
+          <div className="flex items-center gap-2">
             <Button
               type="button"
+              variant="outline"
               size="sm"
-              onClick={() => {
-                setResolution("");
-                setPendingStatus("resolved");
-              }}
-              className="gap-2 text-xs font-semibold rounded-xl bg-destructive/10 text-destructive hover:bg-destructive/20 border border-destructive/20 shadow-xs"
+              onClick={() => setShowAssignModal(true)}
+              className="gap-2 text-xs font-medium rounded-xl border-border bg-card shadow-xs"
             >
-              <CheckCircle2 className="size-4 text-destructive" />
-              <span>Cerrar Ticket</span>
+              <ArrowLeftRight className="size-4 text-muted-foreground" />
+              <span>Reasignar</span>
             </Button>
-          ) : (
-            <span className="text-xs px-3 py-1.5 rounded-xl bg-muted text-muted-foreground font-semibold">
-              Ticket Concluido
-            </span>
-          )}
-        </div>
+
+            {ticket.status !== "resolved" && ticket.status !== "cancelled" ? (
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => {
+                  setResolution("");
+                  setPendingStatus("resolved");
+                }}
+                className="gap-2 text-xs font-semibold rounded-xl bg-destructive/10 text-destructive hover:bg-destructive/20 border border-destructive/20 shadow-xs"
+              >
+                <CheckCircle2 className="size-4 text-destructive" />
+                <span>Cerrar Ticket</span>
+              </Button>
+            ) : (
+              <span className="text-xs px-3 py-1.5 rounded-xl bg-muted text-muted-foreground font-semibold">
+                Ticket Concluido
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Title & Status Header Card */}
@@ -429,119 +432,121 @@ export function TicketDetailPage() {
             </div>
           </div>
 
-          {/* Card 2: Update Status & Add Note */}
-          <div className="bg-card rounded-2xl p-6 shadow-xs border border-border flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Edit3 className="size-5 text-brand" />
-                <h2 className="text-base font-semibold text-foreground">
-                  Actualizar Estado y Agregar Observación
-                </h2>
-              </div>
-              <span className="text-xs text-muted-foreground flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-brand animate-pulse" />
-                Sincronización en vivo
-              </span>
-            </div>
-
-            <form onSubmit={handleFormSubmit} className="flex flex-col gap-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Select New Status */}
-                <div className="flex flex-col gap-1.5">
-                  <label htmlFor="nuevo-estado" className="text-xs font-semibold text-foreground">
-                    Cambiar Estado
-                  </label>
-                  <select
-                    id="nuevo-estado"
-                    value={selectedStatusForm}
-                    onChange={(e) => setSelectedStatusForm(e.target.value as TicketStatus)}
-                    className="w-full bg-muted/60 text-foreground text-xs font-medium rounded-xl px-3.5 py-2.5 border border-border focus:outline-none focus:ring-1 focus:ring-brand"
-                  >
-                    <option value="in_progress">En Proceso (Trabajando en sitio)</option>
-                    <option value="on_hold">En Espera de Repuesto / Proveedor</option>
-                    <option value="pending">Retornar a Pendiente</option>
-                    <option value="resolved">Marcar como Resuelto</option>
-                    <option value="cancelled">Cancelar Ticket</option>
-                  </select>
+          {/* Card 2: Update Status & Add Note (Solo para staff) */}
+          {isStaff && (
+            <div className="bg-card rounded-2xl p-6 shadow-xs border border-border flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Edit3 className="size-5 text-brand" />
+                  <h2 className="text-base font-semibold text-foreground">
+                    Actualizar Estado y Agregar Observación
+                  </h2>
                 </div>
+                <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <span className="size-2 rounded-full bg-brand animate-pulse" />
+                  Sincronización en vivo
+                </span>
+              </div>
 
-                {/* Note Visibility Toggle */}
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-xs font-semibold text-foreground">Visibilidad del Mensaje</span>
-                  <div className="flex p-1 bg-muted rounded-xl">
-                    <button
-                      type="button"
-                      onClick={() => setIsPublicNote(false)}
-                      className={cn(
-                        "flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5",
-                        !isPublicNote
-                          ? "bg-card text-foreground shadow-xs"
-                          : "text-muted-foreground hover:text-foreground",
-                      )}
+              <form onSubmit={handleFormSubmit} className="flex flex-col gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Select New Status */}
+                  <div className="flex flex-col gap-1.5">
+                    <label htmlFor="nuevo-estado" className="text-xs font-semibold text-foreground">
+                      Cambiar Estado
+                    </label>
+                    <select
+                      id="nuevo-estado"
+                      value={selectedStatusForm}
+                      onChange={(e) => setSelectedStatusForm(e.target.value as TicketStatus)}
+                      className="w-full bg-muted/60 text-foreground text-xs font-medium rounded-xl px-3.5 py-2.5 border border-border focus:outline-none focus:ring-1 focus:ring-brand"
                     >
-                      <Lock className="size-3.5 text-muted-foreground" />
-                      Nota Interna
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setIsPublicNote(true)}
-                      className={cn(
-                        "flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5",
-                        isPublicNote
-                          ? "bg-card text-foreground shadow-xs"
-                          : "text-muted-foreground hover:text-foreground",
-                      )}
-                    >
-                      <Mail className="size-3.5 text-brand" />
-                      Para Solicitante
-                    </button>
+                      <option value="in_progress">En Proceso (Trabajando en sitio)</option>
+                      <option value="on_hold">En Espera de Repuesto / Proveedor</option>
+                      <option value="pending">Retornar a Pendiente</option>
+                      <option value="resolved">Marcar como Resuelto</option>
+                      <option value="cancelled">Cancelar Ticket</option>
+                    </select>
+                  </div>
+
+                  {/* Note Visibility Toggle */}
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-xs font-semibold text-foreground">Visibilidad del Mensaje</span>
+                    <div className="flex p-1 bg-muted rounded-xl">
+                      <button
+                        type="button"
+                        onClick={() => setIsPublicNote(false)}
+                        className={cn(
+                          "flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5",
+                          !isPublicNote
+                            ? "bg-card text-foreground shadow-xs"
+                            : "text-muted-foreground hover:text-foreground",
+                        )}
+                      >
+                        <Lock className="size-3.5 text-muted-foreground" />
+                        Nota Interna
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsPublicNote(true)}
+                        className={cn(
+                          "flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5",
+                          isPublicNote
+                            ? "bg-card text-foreground shadow-xs"
+                            : "text-muted-foreground hover:text-foreground",
+                        )}
+                      >
+                        <Mail className="size-3.5 text-brand" />
+                        Para Solicitante
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Note Textarea */}
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="nota-observacion" className="text-xs font-semibold text-foreground">
-                  Bitácora de Intervención / Respuesta
-                </label>
-                <Textarea
-                  id="nota-observacion"
-                  rows={3}
-                  value={noteText}
-                  onChange={(e) => setNoteText(e.target.value)}
-                  placeholder={
-                    isPublicNote
-                      ? `Escribe un mensaje explicativo para ${requestor?.name ?? "el solicitante"}...`
-                      : "Escribe el avance técnico o diagnóstico visible únicamente para técnicos..."
-                  }
-                  className="w-full bg-muted/50 text-foreground text-xs rounded-xl p-3 placeholder:text-muted-foreground border-border focus-visible:ring-brand resize-none"
-                />
-              </div>
-
-              {/* Submit Row */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={notifyEmail}
-                    onChange={(e) => setNotifyEmail(e.target.checked)}
-                    className="size-4 rounded text-brand focus:ring-brand accent-brand"
+                {/* Note Textarea */}
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="nota-observacion" className="text-xs font-semibold text-foreground">
+                    Bitácora de Intervención / Respuesta
+                  </label>
+                  <Textarea
+                    id="nota-observacion"
+                    rows={3}
+                    value={noteText}
+                    onChange={(e) => setNoteText(e.target.value)}
+                    placeholder={
+                      isPublicNote
+                        ? `Escribe un mensaje explicativo para ${requestor?.name ?? "el solicitante"}...`
+                        : "Escribe el avance técnico o diagnóstico visible únicamente para técnicos..."
+                    }
+                    className="w-full bg-muted/50 text-foreground text-xs rounded-xl p-3 placeholder:text-muted-foreground border-border focus-visible:ring-brand resize-none"
                   />
-                  <span className="text-xs text-muted-foreground">
-                    Notificar por correo electrónico al solicitante
-                  </span>
-                </label>
-                <Button
-                  type="submit"
-                  size="sm"
-                  className="gap-2 bg-brand hover:bg-brand-hover text-white text-xs font-semibold rounded-xl px-5 py-2.5 shadow-xs w-full sm:w-auto"
-                >
-                  <Send className="size-3.5" />
-                  <span>Guardar y Actualizar</span>
-                </Button>
-              </div>
-            </form>
-          </div>
+                </div>
+
+                {/* Submit Row */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={notifyEmail}
+                      onChange={(e) => setNotifyEmail(e.target.checked)}
+                      className="size-4 rounded text-brand focus:ring-brand accent-brand"
+                    />
+                    <span className="text-xs text-muted-foreground">
+                      Notificar por correo electrónico al solicitante
+                    </span>
+                  </label>
+                  <Button
+                    type="submit"
+                    size="sm"
+                    className="gap-2 bg-brand hover:bg-brand-hover text-white text-xs font-semibold rounded-xl px-5 py-2.5 shadow-xs w-full sm:w-auto"
+                  >
+                    <Send className="size-3.5" />
+                    <span>Guardar y Actualizar</span>
+                  </Button>
+                </div>
+              </form>
+            </div>
+          )}
 
           {/* Card 3: Chronological History & Traceability */}
           <div className="bg-card rounded-2xl p-6 shadow-xs border border-border flex flex-col gap-4">
@@ -640,16 +645,18 @@ export function TicketDetailPage() {
               </div>
             </div>
 
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setShowAssignModal(true)}
-              className="w-full text-xs font-medium rounded-xl gap-2 border-border bg-card hover:bg-muted"
-            >
-              <ArrowLeftRight className="size-4 text-muted-foreground" />
-              <span>Reasignar a otro técnico</span>
-            </Button>
+            {isStaff && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAssignModal(true)}
+                className="w-full text-xs font-medium rounded-xl gap-2 border-border bg-card hover:bg-muted"
+              >
+                <ArrowLeftRight className="size-4 text-muted-foreground" />
+                <span>Reasignar a otro técnico</span>
+              </Button>
+            )}
           </div>
 
           {/* Panel 2: Applicant Information (Mensaje y Ver Historial eliminados según instrucciones) */}
@@ -785,24 +792,26 @@ export function TicketDetailPage() {
               <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 Archivos & Evidencias ({ticket.attachments.length})
               </span>
-              <button
-                type="button"
-                disabled={isUploadingAttachment}
-                onClick={() => attachmentFileInputRef.current?.click()}
-                className="text-brand text-xs font-bold hover:underline flex items-center gap-1 disabled:opacity-50 cursor-pointer"
-              >
-                {isUploadingAttachment ? (
-                  <>
-                    <Loader2 className="size-3 animate-spin" />
-                    <span>Subiendo...</span>
-                  </>
-                ) : (
-                  <>
-                    <Upload className="size-3" />
-                    <span>Subir</span>
-                  </>
-                )}
-              </button>
+              {isStaff && (
+                <button
+                  type="button"
+                  disabled={isUploadingAttachment}
+                  onClick={() => attachmentFileInputRef.current?.click()}
+                  className="text-brand text-xs font-bold hover:underline flex items-center gap-1 disabled:opacity-50 cursor-pointer"
+                >
+                  {isUploadingAttachment ? (
+                    <>
+                      <Loader2 className="size-3 animate-spin" />
+                      <span>Subiendo...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="size-3" />
+                      <span>Subir</span>
+                    </>
+                  )}
+                </button>
+              )}
             </div>
 
             <div className="flex flex-col gap-2">

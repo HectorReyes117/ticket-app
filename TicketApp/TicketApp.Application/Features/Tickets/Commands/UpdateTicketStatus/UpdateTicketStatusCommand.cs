@@ -47,6 +47,10 @@ public class UpdateTicketStatusCommandHandler : IRequestHandler<UpdateTicketStat
 
     public async Task<ApiResponse<TicketDto>> Handle(UpdateTicketStatusCommand request, CancellationToken cancellationToken)
     {
+        var currentRole = _currentUserService.Role?.ToLowerInvariant();
+        if (currentRole == "requestor")
+            throw new UnauthorizedException("Los solicitantes no tienen autorización para modificar el estado de una solicitud.");
+
         var ticket = await _unitOfWork.Repository<Ticket>()
             .Query()
             .Include(t => t.Location)

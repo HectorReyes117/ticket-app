@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { PageHeader } from "@/components/common/PageHeader";
 import { EmptyState } from "@/components/common/EmptyState";
+import { useAuth } from "@/context/auth-context";
 import { useSiteStore, useTicketStore, useUserStore } from "@/store";
 import {
   KpiSection,
@@ -21,9 +22,18 @@ import { TechnicianLoad } from "@/features/dashboard/components/TechnicianLoad";
 const WEEKDAYS = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
 
 export function DashboardPage() {
-  const tickets = useTicketStore((state) => state.items);
+  const { user } = useAuth();
+  const allTickets = useTicketStore((state) => state.items);
   const users = useUserStore((state) => state.items);
   const sites = useSiteStore((state) => state.items);
+
+  const isRequestor = user?.role === "requestor";
+  const tickets = useMemo(() => {
+    if (isRequestor && user?.id) {
+      return allTickets.filter((t) => t.requestorId === user.id);
+    }
+    return allTickets;
+  }, [allTickets, isRequestor, user?.id]);
 
   const usersById = useMemo(
     () => Object.fromEntries(users.map((u) => [u.id, u])),

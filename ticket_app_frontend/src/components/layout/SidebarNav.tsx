@@ -89,10 +89,17 @@ export function SidebarNav({ collapsed, onNavigate }: SidebarNavProps) {
   const userRole = user?.role;
 
   const visibleGroups = NAV_GROUPS.map((group) => {
-    const items = group.items.filter((item) => {
-      if (!item.allowedRoles || item.allowedRoles.length === 0) return true;
-      return userRole ? item.allowedRoles.includes(userRole) : false;
-    });
+    const items = group.items
+      .filter((item) => {
+        if (!item.allowedRoles || item.allowedRoles.length === 0) return true;
+        return userRole ? item.allowedRoles.includes(userRole) : false;
+      })
+      .map((item) => {
+        if (item.name === "all-tickets" && userRole === "requestor") {
+          return { ...item, label: "Mis Solicitudes" };
+        }
+        return item;
+      });
     return { ...group, items };
   }).filter((group) => group.items.length > 0);
 
