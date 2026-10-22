@@ -7,6 +7,7 @@ using TicketApp.Application.Features.Tickets.Commands.AssignTicket;
 using TicketApp.Application.Features.Tickets.Commands.CreateTicket;
 using TicketApp.Application.Features.Tickets.Commands.UpdateTicketStatus;
 using TicketApp.Application.Features.Tickets.Commands.UploadAttachment;
+using TicketApp.Application.Features.Tickets.Commands.DeleteAttachment;
 using TicketApp.Application.Features.Tickets.DTOs;
 using TicketApp.Application.Features.Tickets.Queries.GetTicketById;
 using TicketApp.Application.Features.Tickets.Queries.GetTickets;
@@ -100,6 +101,20 @@ public class TicketsController : BaseApiController
             FileName = file.FileName,
             ContentType = file.ContentType,
             FileLength = file.Length
+        };
+
+        var result = await Mediator.Send(command);
+        return Ok(result);
+    }
+
+    [Authorize(Roles = "admin,technician,director")]
+    [HttpDelete("{id:int}/attachments/{attachmentId:int}")]
+    public async Task<ActionResult<ApiResponse<bool>>> DeleteAttachment(int id, int attachmentId)
+    {
+        var command = new DeleteTicketAttachmentCommand
+        {
+            TicketId = id,
+            AttachmentId = attachmentId
         };
 
         var result = await Mediator.Send(command);

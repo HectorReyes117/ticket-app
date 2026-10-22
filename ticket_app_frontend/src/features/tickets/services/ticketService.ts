@@ -325,3 +325,10 @@ export async function uploadTicketAttachment(
     fileUrl: res.fileUrl,
   };
 }
+
+export async function deleteTicketAttachment(
+  ticketId: string | number,
+  attachmentId: string | number,
+): Promise<boolean> {
+  return await api.delete<boolean>(`/tickets/${ticketId}/attachments/${attachmentId}`);
+}

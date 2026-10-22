@@ -18,6 +18,7 @@ import {
   Phone,
   Send,
   Server,
+  Trash2,
   Upload,
   User,
   Wrench,
@@ -36,7 +37,7 @@ import { toast } from "@/components/ui/toast";
 import { useSiteStore, useTicketStore, useUserStore } from "@/store";
 import { useAuth } from "@/context/auth-context";
 import { formatDateTime, formatRelativeTime, formatSla, parseDate, PRIORITY_META, cn, resolveFileUrl } from "@/utils";
-import { uploadTicketAttachment } from "@/features/tickets/services/ticketService";
+import { uploadTicketAttachment, deleteTicketAttachment } from "@/features/tickets/services/ticketService";
 import { UserAvatar } from "@/components/common/UserAvatar";
 import {
   FileThumbnail,
@@ -97,7 +98,34 @@ export function TicketDetailPage() {
   const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
   const attachmentFileInputRef = useRef<HTMLInputElement>(null);
 
+  const [isDeletingAttachmentId, setIsDeletingAttachmentId] = useState<string | null>(null);
+  const [attachmentToDelete, setAttachmentToDelete] = useState<{ id: string; name: string } | null>(null);
+
   const fetchTicketDetails = useTicketStore((state) => state.fetchTicketDetails);
+
+  const handleConfirmDeleteAttachment = async () => {
+    if (!id || !attachmentToDelete) return;
+
+    try {
+      setIsDeletingAttachmentId(attachmentToDelete.id);
+      await deleteTicketAttachment(id, attachmentToDelete.id);
+      toast.add({
+        title: "Evidencia eliminada",
+        description: `Se eliminó el archivo ${attachmentToDelete.name}.`,
+        type: "success",
+      });
+      setAttachmentToDelete(null);
+      await fetchTicketDetails(id);
+    } catch (err: any) {
+      toast.add({
+        title: "Error al eliminar archivo",
+        description: err.message || "No se pudo eliminar el archivo.",
+        type: "danger",
+      });
+    } finally {
+      setIsDeletingAttachmentId(null);
+    }
+  };
 
   const handleUploadAttachment = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -872,6 +900,21 @@ export function TicketDetailPage() {
                           >
                             <Download className="size-4" />
                           </button>
+                          {isStaff && (
+                            <button
+                              type="button"
+                              disabled={isDeletingAttachmentId === file.id}
+                              onClick={() => setAttachmentToDelete({ id: file.id, name: file.name })}
+                              title="Eliminar evidencia"
+                              className="p-1.5 text-muted-foreground hover:text-destructive transition-colors rounded-lg hover:bg-card cursor-pointer disabled:opacity-50"
+                            >
+                              {isDeletingAttachmentId === file.id ? (
+                                <Loader2 className="size-4 animate-spin text-destructive" />
+                              ) : (
+                                <Trash2 className="size-4" />
+                              )}
+                            </button>
+                          )}
                         </div>
                       ) : (
                         <button
@@ -987,6 +1030,56 @@ export function TicketDetailPage() {
         onClose={() => setPreviewTarget(null)}
         onDownload={(url, name) => handleDownloadFile(url, name)}
       />
+
+      {/* Modal Confirmación para Eliminar Evidencia */}
+      <Dialog open={attachmentToDelete !== null} onOpenChange={(open) => !open && setAttachmentToDelete(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="size-5" />
+              <span>Eliminar Evidencia</span>
+            </DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de que deseas eliminar permanentemente el archivo{" "}
+              <span className="font-semibold text-foreground">
+                "{attachmentToDelete?.name}"
+              </span>
+              ? Esta acción no se puede deshacer y quedará registrada en la bitácora.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 flex sm:justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={isDeletingAttachmentId !== null}
+              onClick={() => setAttachmentToDelete(null)}
+              className="rounded-xl text-xs"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              disabled={isDeletingAttachmentId !== null}
+              onClick={handleConfirmDeleteAttachment}
+              className="rounded-xl text-xs bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-1.5"
+            >
+              {isDeletingAttachmentId ? (
+                <>
+                  <Loader2 className="size-3.5 animate-spin" />
+                  <span>Eliminando...</span>
+                </>
+              ) : (
+                <>
+                  <Trash2 className="size-3.5" />
+                  <span>Eliminar archivo</span>
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
