@@ -45,6 +45,19 @@ export function resolveFileUrl(pathOrUrl?: string): string {
     return pathOrUrl;
   }
 
+  // If pathOrUrl has http:// with matching apiOrigin host, upgrade to https
+  if (apiOrigin.startsWith("https://") && pathOrUrl.startsWith("http://")) {
+    try {
+      const incomingUrl = new URL(pathOrUrl);
+      const targetUrl = new URL(apiOrigin);
+      if (incomingUrl.host === targetUrl.host) {
+        return `${apiOrigin}${incomingUrl.pathname}${incomingUrl.search}`;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
   // If already absolute with any other domain, return as-is
   if (pathOrUrl.startsWith("http://") || pathOrUrl.startsWith("https://")) {
     return pathOrUrl;

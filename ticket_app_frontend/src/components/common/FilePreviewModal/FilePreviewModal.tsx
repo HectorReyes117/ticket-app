@@ -1,10 +1,12 @@
-import { Download, ExternalLink } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Download, ExternalLink, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { getStoredToken } from "@/services/api";
 import { getFileCategory, type FileCategory } from "../FileThumbnail";
 
 export interface PreviewFileTarget {
@@ -25,9 +27,62 @@ export function FilePreviewModal({
   onClose,
   onDownload,
 }: FilePreviewModalProps) {
-  if (!target) return null;
+  const [blobPdfUrl, setBlobPdfUrl] = useState<string | null>(null);
+  const [loadingPdf, setLoadingPdf] = useState(false);
 
-  const category: FileCategory = getFileCategory(target.name, target.mimeType);
+  const category: FileCategory = target
+    ? getFileCategory(target.name, target.mimeType)
+    : "other";
+
+  useEffect(() => {
+    if (!target || category !== "pdf") {
+      setBlobPdfUrl(null);
+      return;
+    }
+
+    // Si ya es un blob: (por ejemplo al crearse localmente)
+    if (target.url.startsWith("blob:") || target.url.startsWith("data:")) {
+      setBlobPdfUrl(target.url);
+      setLoadingPdf(false);
+      return;
+    }
+
+    let isMounted = true;
+    setLoadingPdf(true);
+
+    const loadPdfBlob = async () => {
+      try {
+        const token = getStoredToken();
+        const headers: HeadersInit = {};
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+        const res = await fetch(target.url, { headers });
+        if (!res.ok) throw new Error("Error loading PDF");
+        const blob = await res.blob();
+        if (isMounted) {
+          const blobUrl = URL.createObjectURL(blob);
+          setBlobPdfUrl(blobUrl);
+          setLoadingPdf(false);
+        }
+      } catch {
+        if (isMounted) {
+          setLoadingPdf(false);
+        }
+      }
+    };
+
+    loadPdfBlob();
+
+    return () => {
+      isMounted = false;
+      if (blobPdfUrl && blobPdfUrl.startsWith("blob:") && blobPdfUrl !== target.url) {
+        URL.revokeObjectURL(blobPdfUrl);
+      }
+    };
+  }, [target?.url, category]);
+
+  if (!target) return null;
 
   return (
     <Dialog open={!!target} onOpenChange={(open) => !open && onClose()}>
@@ -106,9 +161,15 @@ export function FilePreviewModal({
           )}
 
           {category === "pdf" && (
-            <div className="w-full h-full rounded-xl overflow-hidden border border-border shadow-lg bg-white">
+            <div className="w-full h-full rounded-xl overflow-hidden border border-border shadow-lg bg-white relative flex items-center justify-center">
+              {loadingPdf && (
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-background/80 backdrop-blur-xs">
+                  <Loader2 className="size-8 animate-spin text-brand" />
+                  <span className="text-xs font-medium text-muted-foreground">Cargando documento...</span>
+                </div>
+              )}
               <iframe
-                src={`${target.url}#toolbar=1`}
+                src={`${blobPdfUrl || target.url}#toolbar=1`}
                 title={target.name}
                 className="w-full h-full min-h-[75vh]"
               />

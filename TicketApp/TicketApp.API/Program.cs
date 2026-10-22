@@ -13,6 +13,16 @@ using TicketApp.Infrastructure.Seeds;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure Forwarded Headers for reverse proxy (Render, Cloudflare, etc.)
+builder.Services.Configure<Microsoft.AspNetCore.Builder.ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor |
+                               Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto |
+                               Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedHost;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 // 1. Register Architecture Layers Services
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
@@ -104,6 +114,8 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
+
+app.UseForwardedHeaders();
 
 // 7. Middlewares Pipeline
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();

@@ -43,12 +43,8 @@ public class LocalFileStorageService : IFileStorageService
             await fileStream.CopyToAsync(destStream, cancellationToken);
         }
 
-        var request = _httpContextAccessor.HttpContext?.Request;
-        var baseUrl = request != null 
-            ? $"{request.Scheme}://{request.Host}" 
-            : "";
-
-        var fileUrl = $"{baseUrl}/uploads/{folder}/{uniqueFileName}";
+        // Guardar solo la ruta relativa en base de datos: /uploads/{folder}/{uniqueFileName}
+        var fileUrl = $"/uploads/{folder}/{uniqueFileName}";
 
         return (fileUrl, physicalPath);
     }
