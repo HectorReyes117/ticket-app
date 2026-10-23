@@ -17,6 +17,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Ticket> Tickets => Set<Ticket>();
     public DbSet<TicketActivity> TicketActivities => Set<TicketActivity>();
     public DbSet<Attachment> Attachments => Set<Attachment>();
+    public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

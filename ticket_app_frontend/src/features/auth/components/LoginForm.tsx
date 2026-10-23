@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Eye,
   EyeOff,
@@ -98,12 +98,12 @@ export function LoginForm() {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="login-password">Contraseña</Label>
-              <button
-                type="button"
+              <Link
+                to="/forgot-password"
                 className="text-xs font-medium text-brand hover:underline"
               >
                 ¿Olvidaste tu contraseña?
-              </button>
+              </Link>
             </div>
             <div className="relative">
               <Input

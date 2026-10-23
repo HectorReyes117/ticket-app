@@ -89,6 +89,24 @@ export async function getCurrentUser(): Promise<User> {
   return mapBackendUserToFrontend(profile);
 }
 
+export async function forgotPassword(email: string): Promise<{ success: boolean; message: string }> {
+  return await api.post<{ success: boolean; message: string }>("/auth/forgot-password", {
+    email: email.trim(),
+  });
+}
+
+export async function validateResetToken(token: string): Promise<boolean> {
+  return await api.get<boolean>(`/auth/validate-reset-token?token=${encodeURIComponent(token)}`);
+}
+
+export async function resetPassword(token: string, newPassword: string, confirmPassword: string): Promise<{ success: boolean; message: string }> {
+  return await api.post<{ success: boolean; message: string }>("/auth/reset-password", {
+    token,
+    newPassword,
+    confirmPassword,
+  });
+}
+
 export function logout(): void {
   removeStoredToken();
 }

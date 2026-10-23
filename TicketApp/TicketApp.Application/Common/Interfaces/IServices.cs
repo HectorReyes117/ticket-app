@@ -25,3 +25,10 @@ public interface IPasswordHasher
     string HashPassword(string password);
     bool VerifyPassword(string password, string passwordHash);
 }
+
+public interface IEmailService
+{
+    Task<bool> SendEmailAsync(string to, string subject, string htmlBody, CancellationToken cancellationToken = default);
+    Task<bool> SendTemplateEmailAsync(string to, string subject, string templateName, IDictionary<string, string> replacements, CancellationToken cancellationToken = default);
+    string GetFrontendUrl();
+}

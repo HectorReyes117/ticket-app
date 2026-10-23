@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TicketApp.Application.Common.Interfaces;
 using TicketApp.Infrastructure.Context;
+using TicketApp.Infrastructure.Helpers;
 using TicketApp.Infrastructure.Repositories;
 using TicketApp.Infrastructure.Services;
 using TicketApp.Infrastructure.UnitOfWork;
@@ -13,14 +14,13 @@ public static class InfrastructureServiceRegistration
 {
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
     {
-        // Supabase / PostgreSQL Connection String
-        // Checks EnvironmentVariableTarget.Process (Docker/Linux containers), EnvironmentVariableTarget.Machine (Windows host), configuration, or fallback
-        var rawConnectionString = Environment.GetEnvironmentVariable("SUPABASE_DB", EnvironmentVariableTarget.Process)
-            ?? Environment.GetEnvironmentVariable("SUPABASE_DB", EnvironmentVariableTarget.Machine)
-            ?? Environment.GetEnvironmentVariable("SUPABASE_DB", EnvironmentVariableTarget.User)
-            ?? configuration["SUPABASE_DB"]
-            ?? configuration.GetConnectionString("DefaultConnection")
-            ?? "Host=localhost;Database=ticketapp;Username=postgres;Password=postgres";
+        // 1. Obtener la clave configurada en ConnectionStrings:DefaultConnection
+        var configuredConn = configuration.GetConnectionString("DefaultConnection") 
+                             ?? configuration["SUPABASE_DB"] 
+                             ?? "SUPABASE_DB";
+
+        // 2. Si configuredConn apunta a una variable de entorno (ej: "SUPABASE_DB"), resolver su valor
+        var rawConnectionString = ConfigurationHelper.ResolveEnvValue(configuredConn, configuredConn);
 
         var connectionString = NormalizePostgresConnectionString(rawConnectionString);
 
@@ -33,6 +33,7 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
+        services.AddScoped<IEmailService, ResendEmailService>();
 
         return services;
     }

@@ -32,9 +32,10 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 // 3. JWT Authentication Setup
-var jwtSecret = builder.Configuration["JwtSettings:Secret"] ?? "TicketApp_Super_Secret_Jwt_Security_Key_2026_Unicaribe_Development_Key!";
-var jwtIssuer = builder.Configuration["JwtSettings:Issuer"] ?? "TicketAppApi";
-var jwtAudience = builder.Configuration["JwtSettings:Audience"] ?? "TicketAppClient";
+var rawSecret = builder.Configuration["JwtSettings:Secret"] ?? "JWT_SECRET";
+var jwtSecret = TicketApp.Infrastructure.Helpers.ConfigurationHelper.ResolveEnvValue(rawSecret, "TicketApp_Super_Secret_Jwt_Security_Key_2026_Unicaribe_Development_Key!");
+var jwtIssuer = TicketApp.Infrastructure.Helpers.ConfigurationHelper.ResolveEnvValue(builder.Configuration["JwtSettings:Issuer"], "TicketAppApi");
+var jwtAudience = TicketApp.Infrastructure.Helpers.ConfigurationHelper.ResolveEnvValue(builder.Configuration["JwtSettings:Audience"], "TicketAppClient");
 
 builder.Services.AddAuthentication(options =>
 {

@@ -25,4 +25,28 @@ public class AuthController : BaseApiController
         var result = await Mediator.Send(new GetCurrentUserQuery());
         return Ok(result);
     }
+
+    [HttpPost("forgot-password")]
+    [AllowAnonymous]
+    public async Task<ActionResult<ApiResponse<ResetPasswordResultDto>>> ForgotPassword([FromBody] ForgotPasswordCommand command)
+    {
+        var result = await Mediator.Send(command);
+        return Ok(result);
+    }
+
+    [HttpGet("validate-reset-token")]
+    [AllowAnonymous]
+    public async Task<ActionResult<ApiResponse<bool>>> ValidateResetToken([FromQuery] string token)
+    {
+        var result = await Mediator.Send(new ValidateResetTokenQuery(token));
+        return Ok(result);
+    }
+
+    [HttpPost("reset-password")]
+    [AllowAnonymous]
+    public async Task<ActionResult<ApiResponse<ResetPasswordResultDto>>> ResetPassword([FromBody] ResetPasswordCommand command)
+    {
+        var result = await Mediator.Send(command);
+        return Ok(result);
+    }
 }

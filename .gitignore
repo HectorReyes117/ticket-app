@@ -9,9 +9,21 @@ Thumbs.db
 *.tmp
 *.log
 .atl
+.codegraph/
 
 # Project notes & specifications in root
 /considerations.md
 /GRUPO 5*.md
 /*.md
 !/SISTEMA_DE_SOLICITUDES_DE_SERVICIOS_V2.md
+
+# Ignored assets, documentation, and user uploads
+docs/
+stitch_assets/
+**/wwwroot/uploads/
+**/wwwroot/
+*.png
+*.jpg
+*.jpeg
+*.svg
+*.pdf
