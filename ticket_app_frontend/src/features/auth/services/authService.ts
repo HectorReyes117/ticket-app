@@ -22,6 +22,7 @@ export interface BackendUserProfile {
   locationName?: string;
   departmentId?: number;
   departmentName?: string;
+  mustChangePassword?: boolean;
   isActive: boolean;
 }
 
@@ -66,6 +67,7 @@ export function mapBackendUserToFrontend(dto: BackendUserProfile): User {
     extension: dto.extension ? `Ext. ${dto.extension}` : "",
     employeeCode: dto.employeeCode || `#EMP-${dto.id}`,
     avatarUrl: dto.avatarUrl,
+    mustChangePassword: dto.mustChangePassword,
     queues: ["Soporte General"],
   };
 }
@@ -104,6 +106,18 @@ export async function resetPassword(token: string, newPassword: string, confirmP
     token,
     newPassword,
     confirmPassword,
+  });
+}
+
+export async function changeInitialPassword(
+  currentPassword: string,
+  newPassword: string,
+  confirmNewPassword: string,
+): Promise<{ success: boolean; message: string }> {
+  return await api.post<{ success: boolean; message: string }>("/auth/change-initial-password", {
+    currentPassword,
+    newPassword,
+    confirmNewPassword,
   });
 }
 

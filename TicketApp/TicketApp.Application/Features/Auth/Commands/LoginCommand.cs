@@ -80,6 +80,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, ApiResponse<Aut
             LocationName = user.Location?.Name,
             DepartmentId = user.DepartmentId,
             DepartmentName = user.Department?.Name,
+            MustChangePassword = user.MustChangePassword,
             IsActive = user.IsActive
         };
 

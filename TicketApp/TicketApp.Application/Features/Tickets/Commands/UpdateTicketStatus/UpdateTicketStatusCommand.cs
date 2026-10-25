@@ -17,6 +17,7 @@ public class UpdateTicketStatusCommand : IRequest<ApiResponse<TicketDto>>
     public TicketStatus NewStatus { get; set; }
     public string? ResolutionSummary { get; set; }
     public string? Note { get; set; }
+    public bool NotifyRequesterByEmail { get; set; } = false;
 }
 
 public class UpdateTicketStatusValidation : AbstractValidator<UpdateTicketStatusCommand>
@@ -38,11 +39,16 @@ public class UpdateTicketStatusCommandHandler : IRequestHandler<UpdateTicketStat
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IEmailService _emailService;
 
-    public UpdateTicketStatusCommandHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUserService)
+    public UpdateTicketStatusCommandHandler(
+        IUnitOfWork unitOfWork,
+        ICurrentUserService currentUserService,
+        IEmailService emailService)
     {
         _unitOfWork = unitOfWork;
         _currentUserService = currentUserService;
+        _emailService = emailService;
     }
 
     public async Task<ApiResponse<TicketDto>> Handle(UpdateTicketStatusCommand request, CancellationToken cancellationToken)
@@ -97,6 +103,53 @@ public class UpdateTicketStatusCommandHandler : IRequestHandler<UpdateTicketStat
 
         await _unitOfWork.Repository<TicketActivity>().AddAsync(statusActivity, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Envío de correo al solicitante si la casilla está marcada
+        if (request.NotifyRequesterByEmail && ticket.Requester != null && !string.IsNullOrWhiteSpace(ticket.Requester.Email))
+        {
+            try
+            {
+                var frontendUrl = _emailService.GetFrontendUrl().TrimEnd('/');
+                var ticketUrl = $"{frontendUrl}/tickets/{ticket.Id}";
+
+                var observationHtml = "";
+                if (!string.IsNullOrWhiteSpace(request.Note))
+                {
+                    observationHtml = $@"
+                    <div style=""background-color: #ffffff; border-left: 4px solid #2563eb; border-top: 1px solid #dce9ff; border-right: 1px solid #dce9ff; border-bottom: 1px solid #dce9ff; border-radius: 0 12px 12px 0; padding: 18px 20px; margin-bottom: 24px;"">
+                      <div style=""font-size: 11px; font-weight: 700; text-transform: uppercase; color: #004ac6; letter-spacing: 0.05em;"">&#128172; Observación del Especialista:</div>
+                      <blockquote style=""font-size: 13.5px; line-height: 22px; color: #0b1c30; font-style: italic; margin: 8px 0 0 0;"">
+                        “{request.Note.Trim()}”
+                      </blockquote>
+                    </div>";
+                }
+
+                var replacements = new Dictionary<string, string>
+                {
+                    { "RequesterName", ticket.Requester.Name },
+                    { "TicketCode", ticket.Code },
+                    { "TicketTitle", ticket.Title },
+                    { "LocationName", ticket.Location?.Name ?? "Sede Central" },
+                    { "AreaName", ticket.LocationArea?.Name ?? "Área General" },
+                    { "PreviousStatus", previousStatus.GetDescription() },
+                    { "NewStatus", request.NewStatus.GetDescription() },
+                    { "AssigneeName", ticket.Assignee?.Name ?? "Equipo de Soporte TI" },
+                    { "ObservationBlock", observationHtml },
+                    { "TicketUrl", ticketUrl }
+                };
+
+                await _emailService.SendTemplateEmailAsync(
+                    ticket.Requester.Email,
+                    $"[{ticket.Code}] Actualización en tu Solicitud de Servicio: {ticket.Title}",
+                    "TicketUpdateNotificationTemplate",
+                    replacements,
+                    cancellationToken);
+            }
+            catch
+            {
+                // El fallo de envío de correo no debe abortar la transacción de base de datos
+            }
+        }
 
         return ApiResponse<TicketDto>.Ok(MapToDto(ticket), "Estado actualizado correctamente");
     }

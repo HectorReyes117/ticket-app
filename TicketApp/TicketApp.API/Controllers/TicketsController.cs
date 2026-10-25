@@ -48,7 +48,8 @@ public class TicketsController : BaseApiController
             TicketId = id,
             NewStatus = request.NewStatus,
             ResolutionSummary = request.ResolutionSummary,
-            Note = request.Note
+            Note = request.Note,
+            NotifyRequesterByEmail = request.NotifyRequesterByEmail
         };
 
         var result = await Mediator.Send(command);
@@ -127,6 +128,7 @@ public class UpdateStatusRequest
     public TicketStatus NewStatus { get; set; }
     public string? ResolutionSummary { get; set; }
     public string? Note { get; set; }
+    public bool NotifyRequesterByEmail { get; set; } = false;
 }
 
 public class AssignTicketRequest

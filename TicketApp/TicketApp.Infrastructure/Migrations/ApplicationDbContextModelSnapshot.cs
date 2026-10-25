@@ -429,6 +429,11 @@ namespace TicketApp.Infrastructure.Migrations
                     b.Property<int?>("LocationId")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("MustChangePassword")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(150)

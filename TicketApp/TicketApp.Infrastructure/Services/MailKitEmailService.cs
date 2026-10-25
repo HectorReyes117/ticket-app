@@ -1,28 +1,29 @@
+using MailKit.Net.Smtp;
+using MailKit.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Resend;
+using Microsoft.Extensions.Options;
+using MimeKit;
 using TicketApp.Application.Common.Interfaces;
+using TicketApp.Infrastructure.Configurations;
 using TicketApp.Infrastructure.Helpers;
 
 namespace TicketApp.Infrastructure.Services;
 
-public class ResendEmailService : IEmailService
+public class MailKitEmailService : IEmailService
 {
     private readonly IConfiguration _configuration;
-    private readonly ILogger<ResendEmailService> _logger;
-    private readonly string _apiKey;
-    private readonly string _fromEmail;
-    private readonly string _fromName;
+    private readonly ILogger<MailKitEmailService> _logger;
+    private readonly SmtpSettings _settings;
 
-    public ResendEmailService(IConfiguration configuration, ILogger<ResendEmailService> logger)
+    public MailKitEmailService(
+        IConfiguration configuration,
+        IOptions<SmtpSettings> options,
+        ILogger<MailKitEmailService> logger)
     {
         _configuration = configuration;
         _logger = logger;
-
-        // Si en appsettings viene el nombre de la variable de entorno (ej: "RESEND_API_KEY"), la resuelve
-        _apiKey = ConfigurationHelper.ResolveEnvValue(_configuration["Resend:ApiKey"], "");
-        _fromEmail = ConfigurationHelper.ResolveEnvValue(_configuration["Resend:FromEmail"], "onboarding@resend.dev");
-        _fromName = ConfigurationHelper.ResolveEnvValue(_configuration["Resend:FromName"], "TicketApp Soporte");
+        _settings = options.Value;
     }
 
     public string GetFrontendUrl()
@@ -33,31 +34,55 @@ public class ResendEmailService : IEmailService
 
     public async Task<bool> SendEmailAsync(string to, string subject, string htmlBody, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(_apiKey))
+        var host = ConfigurationHelper.ResolveEnvValue(_settings.Host, "smtp.gmail.com");
+        var portStr = ConfigurationHelper.ResolveEnvValue(_settings.Port.ToString(), "587");
+        int.TryParse(portStr, out var port);
+        if (port <= 0) port = 587;
+
+        var userName = ConfigurationHelper.ResolveEnvValue(_settings.UserName, "");
+        var rawPassword = ConfigurationHelper.ResolveEnvValue(_settings.Password, "");
+        // Las contraseñas de aplicación de Google a veces vienen con espacios (ej: 'ujuw jlrm xtsc bngw'), los removemos
+        var password = rawPassword.Replace(" ", "").Trim();
+        var fromEmail = ConfigurationHelper.ResolveEnvValue(_settings.FromEmail, userName);
+        var fromName = ConfigurationHelper.ResolveEnvValue(_settings.FromName, "TicketApp Soporte");
+
+        if (string.IsNullOrWhiteSpace(userName) || string.IsNullOrWhiteSpace(password))
         {
-            _logger.LogWarning("Resend API Key no está configurada (RESEND_API_KEY). Omitiendo envío a {To}", to);
+            _logger.LogWarning("Configuración SMTP incompleta (UserName o Password no definidos). Omitiendo envío de correo a {To}", to);
             return false;
         }
 
         try
         {
-            IResend resend = ResendClient.Create(_apiKey);
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(fromName, fromEmail));
+            message.To.Add(MailboxAddress.Parse(to));
+            message.Subject = subject;
 
-            var message = new EmailMessage
+            var bodyBuilder = new BodyBuilder
             {
-                From = $"{_fromName} <{_fromEmail}>",
-                To = to,
-                Subject = subject,
                 HtmlBody = htmlBody
             };
+            message.Body = bodyBuilder.ToMessageBody();
 
-            var response = await resend.EmailSendAsync(message, cancellationToken);
-            _logger.LogInformation("Correo enviado exitosamente a {To} con Subject '{Subject}'. Status: {Success}", to, subject, response.Success);
+            using var client = new SmtpClient();
+
+            // Deshabilitar validación de certificados no válidos solo si se requiriera, pero por defecto mantenemos TLS seguro
+            var secureSocketOptions = _settings.UseSsl 
+                ? SecureSocketOptions.SslOnConnect 
+                : (port == 587 ? SecureSocketOptions.StartTls : SecureSocketOptions.Auto);
+
+            await client.ConnectAsync(host, port, secureSocketOptions, cancellationToken);
+            await client.AuthenticateAsync(userName, password, cancellationToken);
+            await client.SendAsync(message, cancellationToken);
+            await client.DisconnectAsync(true, cancellationToken);
+
+            _logger.LogInformation("Correo enviado exitosamente vía MailKit a {To} con Subject '{Subject}'", to, subject);
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al enviar correo electrónico vía Resend a {To}", to);
+            _logger.LogError(ex, "Error al enviar correo electrónico vía MailKit a {To}", to);
             return false;
         }
     }
@@ -66,13 +91,11 @@ public class ResendEmailService : IEmailService
     {
         try
         {
-            // Ruta de plantillas dentro de Infrastructure/Templates/Email o AppContext
             var baseDir = AppContext.BaseDirectory;
             var templatePath = Path.Combine(baseDir, "Templates", "Email", $"{templateName}.html");
 
             if (!File.Exists(templatePath))
             {
-                // Fallback a ruta de proyecto si se corre en debug
                 var projectDir = Directory.GetCurrentDirectory();
                 var fallbackPath = Path.Combine(projectDir, "..", "TicketApp.Infrastructure", "Templates", "Email", $"{templateName}.html");
                 if (File.Exists(fallbackPath))

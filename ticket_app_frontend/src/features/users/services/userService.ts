@@ -18,6 +18,7 @@ export interface BackendUserDto {
   departmentId?: number;
   departmentName?: string;
   openTicketsCount: number;
+  mustChangePassword?: boolean;
   isActive: boolean;
   createdAt: string;
 }
@@ -59,6 +60,7 @@ export function mapBackendDtoToUser(dto: BackendUserDto): User {
     employeeCode: dto.employeeCode || `#EMP-${dto.id}`,
     queues: ["Soporte General"],
     avatarUrl: dto.avatarUrl,
+    mustChangePassword: dto.mustChangePassword,
   };
 }
 
@@ -127,7 +129,7 @@ export async function createUser(draft: UserDraft): Promise<User> {
   const payload = {
     name: draft.name,
     email: draft.email,
-    password: "Password123!", // Default initial temporary password
+    sendCredentialsEmail: draft.generatePasswordLink ?? false,
     role: roleMap[draft.role] ?? 1,
     position: draft.title || "Colaborador",
     phone: draft.phone,

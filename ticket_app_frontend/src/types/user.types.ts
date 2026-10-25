@@ -20,6 +20,7 @@ export interface User {
   employeeCode?: string;
   queues?: string[];
   avatarUrl?: string;
+  mustChangePassword?: boolean;
 }
 
 export interface UserDraft {
@@ -34,4 +35,5 @@ export interface UserDraft {
   employeeCode?: string;
   queues?: string[];
   avatarUrl?: string;
+  generatePasswordLink?: boolean;
 }

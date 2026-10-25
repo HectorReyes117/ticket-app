@@ -26,6 +26,7 @@ interface TicketStore {
     status: TicketStatus,
     actorId?: string,
     message?: string,
+    notifyRequesterByEmail?: boolean,
   ) => Promise<void>;
   assignTicket: (id: string, assigneeId?: string | null, actorId?: string) => Promise<void>;
   addNote: (
@@ -84,8 +85,8 @@ export const useTicketStore = create<TicketStore>((set, get) => ({
     return ticket;
   },
 
-  updateStatus: async (id, status, _actorId, message) => {
-    const updated = await apiUpdateTicketStatus(id, status, message, message);
+  updateStatus: async (id, status, _actorId, message, notifyRequesterByEmail = false) => {
+    const updated = await apiUpdateTicketStatus(id, status, message, message, notifyRequesterByEmail);
     set((state) => ({
       items: state.items.map((t) => (t.id === id ? updated : t)),
     }));

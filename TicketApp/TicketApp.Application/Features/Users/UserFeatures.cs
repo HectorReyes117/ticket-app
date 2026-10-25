@@ -29,6 +29,7 @@ public class UserDto
     public int? DepartmentId { get; set; }
     public string? DepartmentName { get; set; }
     public int OpenTicketsCount { get; set; }
+    public bool MustChangePassword { get; set; }
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
 }
@@ -111,6 +112,7 @@ public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, ApiResponse<P
                 DepartmentId = u.DepartmentId,
                 DepartmentName = u.Department != null ? u.Department.Name : null,
                 OpenTicketsCount = u.AssignedTickets.Count(t => t.Status == TicketStatus.Pending || t.Status == TicketStatus.InProgress || t.Status == TicketStatus.OnHold),
+                MustChangePassword = u.MustChangePassword,
                 IsActive = u.IsActive,
                 CreatedAt = u.CreatedAt
             })
@@ -125,7 +127,8 @@ public class CreateUserCommand : IRequest<ApiResponse<UserDto>>
 {
     public string Name { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
+    public string? Password { get; set; }
+    public bool SendCredentialsEmail { get; set; } = false;
     public UserRole Role { get; set; } = UserRole.Requestor;
     public string Position { get; set; } = string.Empty;
     public string Phone { get; set; } = string.Empty;
@@ -141,7 +144,6 @@ public class CreateUserValidation : AbstractValidator<CreateUserCommand>
     {
         RuleFor(x => x.Name).NotEmpty().WithMessage("El nombre es requerido.");
         RuleFor(x => x.Email).NotEmpty().EmailAddress().WithMessage("El correo electrónico es inválido.");
-        RuleFor(x => x.Password).NotEmpty().MinimumLength(6).WithMessage("La contraseña debe tener mínimo 6 caracteres.");
     }
 }
 
@@ -149,11 +151,16 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, ApiRe
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IPasswordHasher _passwordHasher;
+    private readonly IEmailService _emailService;
 
-    public CreateUserCommandHandler(IUnitOfWork unitOfWork, IPasswordHasher passwordHasher)
+    public CreateUserCommandHandler(
+        IUnitOfWork unitOfWork,
+        IPasswordHasher passwordHasher,
+        IEmailService emailService)
     {
         _unitOfWork = unitOfWork;
         _passwordHasher = passwordHasher;
+        _emailService = emailService;
     }
 
     public async Task<ApiResponse<UserDto>> Handle(CreateUserCommand request, CancellationToken cancellationToken)
@@ -171,12 +178,18 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, ApiRe
         var count = await _unitOfWork.Repository<User>().CountAsync(null, cancellationToken);
         var employeeCode = $"#EMP-{(count + 1):D3}";
 
+        // Generar contraseña temporal única por usuario
+        var temporaryPassword = !string.IsNullOrWhiteSpace(request.Password)
+            ? request.Password.Trim()
+            : GenerateSecureRandomPassword();
+
         var user = new User
         {
             EmployeeCode = employeeCode,
             Name = request.Name.Trim(),
             Email = request.Email.Trim().ToLower(),
-            PasswordHash = _passwordHasher.HashPassword(request.Password),
+            PasswordHash = _passwordHasher.HashPassword(temporaryPassword),
+            MustChangePassword = true, // Obligatorio cambiar en primer login
             Role = request.Role,
             Position = request.Position.Trim(),
             Phone = request.Phone.Trim(),
@@ -198,6 +211,37 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, ApiRe
             .Include(u => u.Department)
             .FirstAsync(u => u.Id == user.Id, cancellationToken);
 
+        // Envío de correo de bienvenida y credenciales si está marcado
+        if (request.SendCredentialsEmail)
+        {
+            try
+            {
+                var frontendUrl = _emailService.GetFrontendUrl().TrimEnd('/');
+                var loginUrl = $"{frontendUrl}/login?user={Uri.EscapeDataString(created.Email)}";
+
+                var replacements = new Dictionary<string, string>
+                {
+                    { "UserName", created.Name },
+                    { "UserEmail", created.Email },
+                    { "TemporaryPassword", temporaryPassword },
+                    { "UserRole", created.Role.GetDescription() },
+                    { "LocationName", created.Location?.Name ?? "Sede Central" },
+                    { "LoginUrl", loginUrl }
+                };
+
+                await _emailService.SendTemplateEmailAsync(
+                    created.Email,
+                    "¡Bienvenido a TicketApp! Acceso a tu cuenta institucional y credenciales",
+                    "WelcomeUserCredentialsTemplate",
+                    replacements,
+                    cancellationToken);
+            }
+            catch
+            {
+                // No abortar creación si falla el servicio de correo
+            }
+        }
+
         var dto = new UserDto
         {
             Id = created.Id,
@@ -216,11 +260,31 @@ public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, ApiRe
             DepartmentId = created.DepartmentId,
             DepartmentName = created.Department?.Name,
             OpenTicketsCount = 0,
+            MustChangePassword = created.MustChangePassword,
             IsActive = created.IsActive,
             CreatedAt = created.CreatedAt
         };
 
         return ApiResponse<UserDto>.Ok(dto, "Usuario registrado exitosamente");
+    }
+
+    private static string GenerateSecureRandomPassword()
+    {
+        // Formato seguro con letras, números y símbolos: Tk#2026! + sufijo aleatorio
+        const string upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+        const string lower = "abcdefghijkmnpqrstuvwxyz";
+        const string digits = "23456789";
+        const string symbols = "!@#$%*";
+        var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
+        
+        char Pick(string chars)
+        {
+            var bytes = new byte[1];
+            rng.GetBytes(bytes);
+            return chars[bytes[0] % chars.Length];
+        }
+
+        return $"Tk#{Pick(upper)}{Pick(lower)}{Pick(digits)}{Pick(lower)}{Pick(digits)}{Pick(symbols)}";
     }
 }
 

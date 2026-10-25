@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TicketApp.Application.Common.Interfaces;
+using TicketApp.Infrastructure.Configurations;
 using TicketApp.Infrastructure.Context;
 using TicketApp.Infrastructure.Helpers;
 using TicketApp.Infrastructure.Repositories;
@@ -14,6 +15,9 @@ public static class InfrastructureServiceRegistration
 {
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
     {
+        // Configuración fuertemente tipada de SMTP (MailKit)
+        services.Configure<SmtpSettings>(configuration.GetSection(SmtpSettings.SectionName));
+
         // 1. Obtener la clave configurada en ConnectionStrings:DefaultConnection
         var configuredConn = configuration.GetConnectionString("DefaultConnection") 
                              ?? configuration["SUPABASE_DB"] 
@@ -33,7 +37,7 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
-        services.AddScoped<IEmailService, ResendEmailService>();
+        services.AddScoped<IEmailService, MailKitEmailService>();
 
         return services;
     }

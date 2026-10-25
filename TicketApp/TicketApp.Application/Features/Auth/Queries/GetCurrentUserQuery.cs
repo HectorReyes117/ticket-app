@@ -59,6 +59,7 @@ public class GetCurrentUserQueryHandler : IRequestHandler<GetCurrentUserQuery, A
             LocationName = user.Location?.Name,
             DepartmentId = user.DepartmentId,
             DepartmentName = user.Department?.Name,
+            MustChangePassword = user.MustChangePassword,
             IsActive = user.IsActive
         };
 

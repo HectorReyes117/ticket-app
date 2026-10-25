@@ -52,6 +52,9 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.Presence)
             .IsRequired();
 
+        builder.Property(u => u.MustChangePassword)
+            .HasDefaultValue(false);
+
         builder.Property(u => u.IsActive)
             .HasDefaultValue(true);
 

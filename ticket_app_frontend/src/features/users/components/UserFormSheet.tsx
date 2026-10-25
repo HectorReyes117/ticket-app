@@ -234,6 +234,7 @@ export function UserFormSheet({ open, onOpenChange, userToEdit }: UserFormSheetP
           employeeCode: form.employeeCode,
           queues: form.queues,
           avatarUrl: form.avatarUrl,
+          generatePasswordLink: form.generatePasswordLink,
         });
         toast.add({
           title: "Usuario creado y enrolado",

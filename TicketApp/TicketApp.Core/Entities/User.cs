@@ -17,6 +17,7 @@ public class User : BaseEntity, IAggregateRoot
     public UserPresence Presence { get; set; } = UserPresence.Online;
     public int? LocationId { get; set; }
     public int? DepartmentId { get; set; }
+    public bool MustChangePassword { get; set; } = false;
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

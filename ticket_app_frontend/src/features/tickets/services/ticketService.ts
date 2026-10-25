@@ -254,6 +254,7 @@ export async function updateTicketStatus(
   status: TicketStatus,
   resolutionSummary?: string,
   note?: string,
+  notifyRequesterByEmail = false,
 ): Promise<Ticket> {
   const statusMap: Record<TicketStatus, number> = {
     pending: 1,
@@ -267,6 +268,7 @@ export async function updateTicketStatus(
     newStatus: statusMap[status] ?? 1,
     resolutionSummary,
     note,
+    notifyRequesterByEmail,
   };
 
   const updated = await api.patch<BackendTicketDto>(`/tickets/${ticketId}/status`, payload);

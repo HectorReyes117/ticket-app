@@ -227,7 +227,13 @@ export function TicketDetailPage() {
 
   const confirmFinalStatus = () => {
     if (!pendingStatus || !user) return;
-    updateStatus(ticket.id, pendingStatus, user.id, resolution.trim() || undefined);
+    updateStatus(
+      ticket.id,
+      pendingStatus,
+      user.id,
+      resolution.trim() || undefined,
+      notifyEmail,
+    );
     toast.add({
       title: pendingStatus === "resolved" ? "Solicitud resuelta" : "Solicitud cancelada",
       description: "El estado de la solicitud fue actualizado exitosamente.",
@@ -261,7 +267,13 @@ export function TicketDetailPage() {
         setPendingStatus(selectedStatusForm);
         return;
       }
-      updateStatus(ticket.id, selectedStatusForm, user?.id ?? "usr-1", noteText.trim() || undefined);
+      updateStatus(
+        ticket.id,
+        selectedStatusForm,
+        user?.id ?? "usr-1",
+        noteText.trim() || undefined,
+        notifyEmail,
+      );
     }
     if (noteText.trim()) {
       addNote(ticket.id, user?.id ?? "usr-1", noteText.trim(), isPublicNote);

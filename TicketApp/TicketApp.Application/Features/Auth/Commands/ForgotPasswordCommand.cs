@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using TicketApp.Application.Common.Interfaces;
 using TicketApp.Application.Common.Models;
 using TicketApp.Application.Features.Auth.DTOs;
@@ -25,31 +26,39 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEmailService _emailService;
+    private readonly ILogger<ForgotPasswordCommandHandler> _logger;
 
     public ForgotPasswordCommandHandler(
         IUnitOfWork unitOfWork,
-        IEmailService emailService)
+        IEmailService emailService,
+        ILogger<ForgotPasswordCommandHandler> logger)
     {
         _unitOfWork = unitOfWork;
         _emailService = emailService;
+        _logger = logger;
     }
 
     public async Task<ApiResponse<ResetPasswordResultDto>> Handle(ForgotPasswordCommand request, CancellationToken cancellationToken)
     {
         var email = request.Email.Trim().ToLowerInvariant();
+        _logger.LogInformation("Iniciando solicitud ForgotPassword para: '{Email}'", email);
+
         var user = await _unitOfWork.Repository<User>().Query()
             .FirstOrDefaultAsync(u => u.Email.ToLower() == email && u.IsActive, cancellationToken);
 
         // Por seguridad, si el usuario no existe no revelamos que no existe, pero respondemos OK
         if (user == null)
         {
+            _logger.LogWarning("No existe usuario activo con el correo '{Email}' en la base de datos.", email);
             return ApiResponse<ResetPasswordResultDto>.Ok(
                 new ResetPasswordResultDto
                 {
                     Success = true,
-                    Message = "Si el correo está registrado en el sistema, recibirás un enlace de recuperación en los próximos minutos."
+                    Message = "Hemos enviado las instrucciones y el enlace para restablecer tu contraseña a tu correo electrónico."
                 });
         }
+
+        _logger.LogInformation("Usuario encontrado: Id={UserId}, Name='{UserName}'. Generando token...", user.Id, user.Name);
 
         // Generar un token criptográficamente seguro
         var tokenBytes = RandomNumberGenerator.GetBytes(32);
@@ -84,12 +93,15 @@ public class ForgotPasswordCommandHandler : IRequestHandler<ForgotPasswordComman
             { "ExpiresInHours", expiresInHours.ToString() }
         };
 
-        await _emailService.SendTemplateEmailAsync(
+        _logger.LogInformation("Llamando a SendTemplateEmailAsync para '{Email}'...", user.Email);
+        var sent = await _emailService.SendTemplateEmailAsync(
             user.Email,
             "Restablecimiento de contraseña - TicketApp",
             "PasswordResetTemplate",
             replacements,
             cancellationToken);
+
+        _logger.LogInformation("Resultado de SendTemplateEmailAsync para '{Email}': {Success}", user.Email, sent);
 
         return ApiResponse<ResetPasswordResultDto>.Ok(
             new ResetPasswordResultDto

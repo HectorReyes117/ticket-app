@@ -49,4 +49,12 @@ public class AuthController : BaseApiController
         var result = await Mediator.Send(command);
         return Ok(result);
     }
+
+    [HttpPost("change-initial-password")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponse<bool>>> ChangeInitialPassword([FromBody] ChangeInitialPasswordCommand command)
+    {
+        var result = await Mediator.Send(command);
+        return Ok(result);
+    }
 }
