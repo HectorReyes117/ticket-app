@@ -10,7 +10,7 @@ import {
   XCircle,
   AlertCircle,
   ArrowRight,
-  ShieldCheck,
+  Check,
 } from "lucide-react";
 
 export function ResetPasswordPage() {
@@ -54,17 +54,21 @@ export function ResetPasswordPage() {
     checkToken();
   }, [token]);
 
+  // Criterios de validación de seguridad
+  const hasMinLength = newPassword.length >= 8;
+  const hasUpper = /[A-Z]/.test(newPassword);
+  const hasLower = /[a-z]/.test(newPassword);
+  const hasNumber = /[0-9]/.test(newPassword);
+  const hasSpecial = /[^A-Za-z0-9]/.test(newPassword);
+  const passwordsMatch = newPassword.length > 0 && newPassword === confirmPassword;
+  const isFormValid = hasMinLength && hasUpper && hasLower && hasNumber && hasSpecial && passwordsMatch;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (newPassword.length < 6) {
-      setError("La contraseña debe tener al menos 6 caracteres.");
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      setError("Las contraseñas no coinciden.");
+    if (!isFormValid) {
+      setError("Por favor cumple con todos los requisitos de seguridad antes de continuar.");
       return;
     }
 
@@ -79,10 +83,6 @@ export function ResetPasswordPage() {
       setLoading(false);
     }
   };
-
-  // Requisitos visuales de contraseña
-  const hasMinLen = newPassword.length >= 6;
-  const hasMatch = newPassword.length > 0 && newPassword === confirmPassword;
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -169,7 +169,7 @@ export function ResetPasswordPage() {
                       id="newPassword"
                       type={showPassword ? "text" : "password"}
                       required
-                      placeholder="Mínimo 6 caracteres"
+                      placeholder="Mínimo 8 caracteres"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       className="block w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition"
@@ -206,20 +206,39 @@ export function ResetPasswordPage() {
 
                 {/* Validaciones en tiempo real */}
                 <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs space-y-1.5">
-                  <div className={`flex items-center gap-1.5 ${hasMinLen ? "text-emerald-600 font-medium" : "text-slate-400"}`}>
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>Mínimo 6 caracteres</span>
-                  </div>
-                  <div className={`flex items-center gap-1.5 ${hasMatch ? "text-emerald-600 font-medium" : "text-slate-400"}`}>
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>Ambas contraseñas coinciden</span>
+                  <span className="font-semibold text-slate-700 block mb-1">Requisitos de contraseña:</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                    <span className={`flex items-center gap-1.5 ${hasMinLength ? "text-emerald-600 font-semibold" : "text-slate-400"}`}>
+                      <Check className={`w-3.5 h-3.5 ${hasMinLength ? "stroke-[3]" : "opacity-40"}`} />
+                      Mínimo 8 caracteres
+                    </span>
+                    <span className={`flex items-center gap-1.5 ${hasUpper ? "text-emerald-600 font-semibold" : "text-slate-400"}`}>
+                      <Check className={`w-3.5 h-3.5 ${hasUpper ? "stroke-[3]" : "opacity-40"}`} />
+                      Una letra mayúscula
+                    </span>
+                    <span className={`flex items-center gap-1.5 ${hasLower ? "text-emerald-600 font-semibold" : "text-slate-400"}`}>
+                      <Check className={`w-3.5 h-3.5 ${hasLower ? "stroke-[3]" : "opacity-40"}`} />
+                      Una letra minúscula
+                    </span>
+                    <span className={`flex items-center gap-1.5 ${hasNumber ? "text-emerald-600 font-semibold" : "text-slate-400"}`}>
+                      <Check className={`w-3.5 h-3.5 ${hasNumber ? "stroke-[3]" : "opacity-40"}`} />
+                      Al menos un número
+                    </span>
+                    <span className={`flex items-center gap-1.5 ${hasSpecial ? "text-emerald-600 font-semibold" : "text-slate-400"}`}>
+                      <Check className={`w-3.5 h-3.5 ${hasSpecial ? "stroke-[3]" : "opacity-40"}`} />
+                      Carácter especial (@, #, !, etc.)
+                    </span>
+                    <span className={`flex items-center gap-1.5 ${passwordsMatch ? "text-emerald-600 font-semibold" : "text-slate-400"}`}>
+                      <Check className={`w-3.5 h-3.5 ${passwordsMatch ? "stroke-[3]" : "opacity-40"}`} />
+                      Las contraseñas coinciden
+                    </span>
                   </div>
                 </div>
 
                 <button
                   type="submit"
-                  disabled={loading || !hasMinLen || !hasMatch}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-md transition disabled:opacity-50"
+                  disabled={loading || !isFormValid}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-md transition disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <span>Guardando...</span>

@@ -78,7 +78,8 @@ public class TicketsController : BaseApiController
             TicketId = id,
             ActivityType = request.ActivityType,
             Message = request.Message,
-            IsPublic = request.IsPublic
+            IsPublic = request.IsPublic,
+            NotifyRequesterByEmail = request.NotifyRequesterByEmail
         };
 
         var result = await Mediator.Send(command);
@@ -141,4 +142,5 @@ public class AddActivityRequest
     public ActivityType ActivityType { get; set; } = ActivityType.Note;
     public string Message { get; set; } = string.Empty;
     public bool IsPublic { get; set; } = true;
+    public bool NotifyRequesterByEmail { get; set; } = false;
 }

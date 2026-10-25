@@ -17,6 +17,7 @@ public class AddTicketActivityCommand : IRequest<ApiResponse<TicketActivityDto>>
     public ActivityType ActivityType { get; set; } = ActivityType.Note;
     public string Message { get; set; } = string.Empty;
     public bool IsPublic { get; set; } = true;
+    public bool NotifyRequesterByEmail { get; set; } = false;
 }
 
 public class AddTicketActivityValidation : AbstractValidator<AddTicketActivityCommand>
@@ -32,16 +33,28 @@ public class AddTicketActivityCommandHandler : IRequestHandler<AddTicketActivity
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IEmailService _emailService;
 
-    public AddTicketActivityCommandHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUserService)
+    public AddTicketActivityCommandHandler(
+        IUnitOfWork unitOfWork,
+        ICurrentUserService currentUserService,
+        IEmailService emailService)
     {
         _unitOfWork = unitOfWork;
         _currentUserService = currentUserService;
+        _emailService = emailService;
     }
 
     public async Task<ApiResponse<TicketActivityDto>> Handle(AddTicketActivityCommand request, CancellationToken cancellationToken)
     {
-        var ticket = await _unitOfWork.Repository<Ticket>().GetByIdAsync(request.TicketId, cancellationToken);
+        var ticket = await _unitOfWork.Repository<Ticket>()
+            .Query()
+            .Include(t => t.Requester)
+            .Include(t => t.Assignee)
+            .Include(t => t.Location)
+            .Include(t => t.LocationArea)
+            .FirstOrDefaultAsync(t => t.Id == request.TicketId, cancellationToken);
+
         if (ticket == null)
             throw new NotFoundException("Ticket", request.TicketId);
 
@@ -62,6 +75,50 @@ public class AddTicketActivityCommandHandler : IRequestHandler<AddTicketActivity
 
         ticket.UpdatedAt = DateTime.UtcNow;
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Envío de correo al solicitante si es nota pública y la opción de notificar está activa
+        if (request.IsPublic && request.NotifyRequesterByEmail && ticket.Requester != null && !string.IsNullOrWhiteSpace(ticket.Requester.Email))
+        {
+            try
+            {
+                var frontendUrl = _emailService.GetFrontendUrl().TrimEnd('/');
+                var ticketUrl = $"{frontendUrl}/tickets/{ticket.Id}";
+
+                var observationHtml = $@"
+                <div style=""background-color: #ffffff; border-left: 4px solid #2563eb; border-top: 1px solid #dce9ff; border-right: 1px solid #dce9ff; border-bottom: 1px solid #dce9ff; border-radius: 0 12px 12px 0; padding: 18px 20px; margin-bottom: 24px;"">
+                  <div style=""font-size: 11px; font-weight: 700; text-transform: uppercase; color: #004ac6; letter-spacing: 0.05em;"">&#128172; Nueva Observación / Respuesta del Especialista:</div>
+                  <blockquote style=""font-size: 13.5px; line-height: 22px; color: #0b1c30; font-style: italic; margin: 8px 0 0 0;"">
+                    “{request.Message.Trim()}”
+                  </blockquote>
+                </div>";
+
+                var statusDesc = ticket.Status.GetDescription();
+                var replacements = new Dictionary<string, string>
+                {
+                    { "RequesterName", ticket.Requester.Name },
+                    { "TicketCode", ticket.Code },
+                    { "TicketTitle", ticket.Title },
+                    { "LocationName", ticket.Location?.Name ?? "Sede Central" },
+                    { "AreaName", ticket.LocationArea?.Name ?? "Área General" },
+                    { "PreviousStatus", statusDesc },
+                    { "NewStatus", statusDesc },
+                    { "AssigneeName", author?.Name ?? ticket.Assignee?.Name ?? "Equipo de Soporte TI" },
+                    { "ObservationBlock", observationHtml },
+                    { "TicketUrl", ticketUrl }
+                };
+
+                await _emailService.SendTemplateEmailAsync(
+                    ticket.Requester.Email,
+                    $"[{ticket.Code}] Nueva observación en tu Solicitud de Servicio: {ticket.Title}",
+                    "TicketUpdateNotificationTemplate",
+                    replacements,
+                    cancellationToken);
+            }
+            catch
+            {
+                // El fallo de envío no bloquea la persistencia de la observación
+            }
+        }
 
         var dto = new TicketActivityDto
         {

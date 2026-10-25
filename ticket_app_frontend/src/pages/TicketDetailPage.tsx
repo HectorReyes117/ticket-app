@@ -254,7 +254,9 @@ export function TicketDetailPage() {
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedStatusForm !== ticket.status) {
+    const statusChanged = selectedStatusForm !== ticket.status;
+
+    if (statusChanged) {
       if (selectedStatusForm !== "pending" && !ticket.assigneeId) {
         toast.add({
           title: "Asignación requerida",
@@ -275,9 +277,14 @@ export function TicketDetailPage() {
         notifyEmail,
       );
     }
+
     if (noteText.trim()) {
-      addNote(ticket.id, user?.id ?? "usr-1", noteText.trim(), isPublicNote);
+      // Si el estado ya cambió, updateStatus ya envía el correo con la nota adjunta.
+      // Si el estado NO cambió, le pasamos notifyEmail a addNote para que notifique al solicitante si está marcado.
+      const shouldNotifyInNote = !statusChanged && notifyEmail && isPublicNote;
+      addNote(ticket.id, user?.id ?? "usr-1", noteText.trim(), isPublicNote, shouldNotifyInNote);
     }
+
     toast.add({
       title: "Actualización registrada",
       description: "Se guardaron los cambios del ticket.",

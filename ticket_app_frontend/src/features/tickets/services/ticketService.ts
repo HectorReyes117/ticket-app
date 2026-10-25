@@ -291,11 +291,13 @@ export async function addTicketNote(
   ticketId: string | number,
   message: string,
   isPublic = false,
+  notifyRequesterByEmail = false,
 ): Promise<TicketActivity> {
   const payload = {
     activityType: 4, // Note
     message,
     isPublic,
+    notifyRequesterByEmail,
   };
 
   const act = await api.post<BackendActivityDto>(`/tickets/${ticketId}/activities`, payload);

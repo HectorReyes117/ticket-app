@@ -34,6 +34,7 @@ interface TicketStore {
     authorId: string,
     message: string,
     isPublic?: boolean,
+    notifyRequesterByEmail?: boolean,
   ) => Promise<void>;
   getTicket: (id: string) => Ticket | undefined;
   fetchTicketDetails: (id: string) => Promise<Ticket>;
@@ -99,8 +100,8 @@ export const useTicketStore = create<TicketStore>((set, get) => ({
     }));
   },
 
-  addNote: async (id, _authorId, message, isPublic = false) => {
-    const note = await apiAddTicketNote(id, message, isPublic);
+  addNote: async (id, _authorId, message, isPublic = false, notifyRequesterByEmail = false) => {
+    const note = await apiAddTicketNote(id, message, isPublic, notifyRequesterByEmail);
     set((state) => ({
       items: state.items.map((ticket) =>
         ticket.id === id
