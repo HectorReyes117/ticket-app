@@ -15,8 +15,10 @@ public static class InfrastructureServiceRegistration
 {
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
     {
-        // Configuración fuertemente tipada de SMTP (MailKit)
-        services.Configure<SmtpSettings>(configuration.GetSection(SmtpSettings.SectionName));
+        // Configuración de Brevo HTTP API
+        services.Configure<BrevoSettings>(configuration.GetSection(BrevoSettings.SectionName));
+        services.AddHttpClient("BrevoClient");
+        services.AddScoped<IEmailService, BrevoEmailService>();
 
         // 1. Obtener la clave configurada en ConnectionStrings:DefaultConnection
         var configuredConn = configuration.GetConnectionString("DefaultConnection") 
@@ -37,7 +39,6 @@ public static class InfrastructureServiceRegistration
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IFileStorageService, LocalFileStorageService>();
-        services.AddScoped<IEmailService, MailKitEmailService>();
 
         return services;
     }
